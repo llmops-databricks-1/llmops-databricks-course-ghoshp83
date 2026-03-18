@@ -20,7 +20,7 @@ uv run pytest
 ## Project Structure
 
 ```
-llmops-databricks-course-ghoshp83/
+{{cookiecutter.repo_name}}/
 ├── .claude/
 │   └── commands/           # Claude Code slash commands (fix-deps, run-notebook, ship)
 ├── .github/
