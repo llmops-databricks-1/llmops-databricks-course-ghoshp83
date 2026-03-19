@@ -1,0 +1,23 @@
+resources:
+  jobs:
+    external_models_custom_provider_job:
+      name: external_models_custom_provider
+      tags:
+        project_name: "arxiv-curator"
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: external_models_custom_provider
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/1.4_external_models_custom_provider.py
+            base_parameters:
+              env: ${bundle.target}
+              git_sha: "${var.git_sha}"
+              run_id: "{{job.run_id}}"
