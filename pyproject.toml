@@ -55,29 +55,15 @@ pythonpath = ["."]
 [tool.ruff]
 line-length = 90
 
-select = [
-    "F",    # pyflakes rules
-    "E",    # pycodestyle error rules
-    "W",    # pycodestyle warning rules
-    "B",    # flake8-bugbear rules
-    "I",    # isort rules
-    "UP",   # pyupgrade rules
-    "SIM",  # flake8-simplify rules
-    "ERA",  # eradicate rules
-    "C",    # pylint convention rules
-    "ANN"   # flake8-annotations rules
+[tool.ruff.lint]
+select = ["F", "E", "W", "B", "I", "UP", "SIM", "ERA", "C", "ANN"]
+ignore = [
+    "D107", "D203", "D213", "C901", "ERA001", "ANN204"
 ]
 
-ignore = [
-    "D107",   # Missing docstring in `__init__`
-    "D203",   # incorrect-blank-line-before-class
-    "D213",   # multi-line-summary-second-line
-    "C901",   # too complex
-    "ERA001", # commented out code
-    "ANN204",
-    "ANN102",
-    "ANN101"
-]
+[tool.ruff.lint.per-file-ignores]
+"notebooks/*.py" = ["E501", "E402", "ANN201", "F821"]
+"tests/*.py" = ["ANN201"]
 
 [tool.ruff.format]
 indent-style = "space"

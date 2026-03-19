@@ -56,20 +56,22 @@ except Exception:
     endpoint = client.create_endpoint(
         name=ENDPOINT_NAME,
         config={
-            "served_entities": [{
-                "name": "dalle-image-generation",
-                "external_model": {
-                    "name": "dall-e-3",
-                    "provider": "openai",
-                    "task": "llm/v1/images",  # Image generation task type
-                    "openai_config": {
-                        "openai_api_key": "{{secrets/pralaygh_secrets/openai_key}}",
-                        "openai_api_base": "https://api.openai.com/v1",
-                        "openai_api_type": "openai"
-                    }
+            "served_entities": [
+                {
+                    "name": "dalle-image-generation",
+                    "external_model": {
+                        "name": "dall-e-3",
+                        "provider": "openai",
+                        "task": "llm/v1/images",  # Image generation task type
+                        "openai_config": {
+                            "openai_api_key": "{{secrets/pralaygh_secrets/openai_key}}",
+                            "openai_api_base": "https://api.openai.com/v1",
+                            "openai_api_type": "openai",
+                        },
+                    },
                 }
-            }]
-        }
+            ]
+        },
     )
 
     logger.info(f"Endpoint created successfully: {ENDPOINT_NAME}")
@@ -84,12 +86,12 @@ except Exception:
 
 # COMMAND ----------
 
-from databricks.sdk import WorkspaceClient
-from openai import OpenAI
 import base64
 from io import BytesIO
+
+from databricks.sdk import WorkspaceClient
+from openai import OpenAI
 from PIL import Image
-import json
 
 w = WorkspaceClient()
 
@@ -98,10 +100,7 @@ host = w.config.host
 token = w.tokens.create(lifetime_seconds=1200).token_value
 
 # Create OpenAI client pointing to Databricks endpoint
-client = OpenAI(
-    api_key=token,
-    base_url=f"{host.rstrip('/')}/serving-endpoints"
-)
+client = OpenAI(api_key=token, base_url=f"{host.rstrip('/')}/serving-endpoints")
 
 ENDPOINT_NAME = "openai-dalle-custom-pralaygh"
 
@@ -125,11 +124,13 @@ response = client.images.generate(
     n=1,  # Number of images to generate
     style="vivid",  # Options: "vivid" or "natural"
     quality="standard",  # Options: "standard" or "hd"
-    response_format="b64_json"  # Returns base64-encoded image
+    response_format="b64_json",  # Returns base64-encoded image
 )
 
 logger.info("Image generated successfully!")
-logger.info(f"Prompt: {response.data[0].revised_prompt if hasattr(response.data[0], 'revised_prompt') else 'N/A'}")
+logger.info(
+    f"Prompt: {response.data[0].revised_prompt if hasattr(response.data[0], 'revised_prompt') else 'N/A'}"
+)
 logger.info("Response format: b64_json")
 
 # COMMAND ----------
@@ -166,7 +167,7 @@ response_url = client.images.generate(
     n=1,
     style="vivid",
     quality="standard",
-    response_format="url"  # Returns temporary URL
+    response_format="url",  # Returns temporary URL
 )
 
 image_url = response_url.data[0].url
