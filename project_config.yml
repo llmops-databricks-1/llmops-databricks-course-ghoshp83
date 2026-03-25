@@ -1,0 +1,52 @@
+# Project Configuration for LLMOps Course
+
+# Development environment
+dev:
+  catalog: mlops_dev
+  schema: pralaygh
+  volume: arxiv_files
+  llm_endpoint: databricks-llama-4-maverick
+  embedding_endpoint: databricks-gte-large-en
+  warehouse_id: 7077f4cb0e616c62
+  vector_search_endpoint: llmops_course_vs_endpoint_pralay
+  genie_space_id: 01f113061bf41578baff744a41bd9ab0
+
+# Acceptance/Staging environment
+acc:
+  catalog: llmops_dev
+  schema: arxiv
+  volume: arxiv_files
+  llm_endpoint: databricks-meta-llama-3-1-70b-instruct
+  embedding_endpoint: databricks-gte-large-en
+  warehouse_id: 7077f4cb0e616c62
+  vector_search_endpoint: llmops_course_vs_endpoint
+  genie_space_id: 01f113061bf41578baff744a41bd9ab0
+
+# Production environment
+prd:
+  catalog: llmops_dev
+  schema: arxiv
+  volume: arxiv_files
+  llm_endpoint: databricks-meta-llama-3-1-70b-instruct
+  embedding_endpoint: databricks-gte-large-en
+  warehouse_id: 7077f4cb0e616c62
+  vector_search_endpoint: llmops_course_vs_endpoint
+  genie_space_id: 01f113061bf41578baff744a41bd9ab0
+
+# Model configuration
+model_config:
+  temperature: 0.7
+  max_tokens: 2000
+  top_p: 0.95
+
+# Vector search configuration
+vector_search:
+  embedding_dimension: 1024
+  similarity_metric: cosine
+  num_results: 5
+
+# Chunking configuration
+chunking:
+  chunk_size: 512
+  chunk_overlap: 50
+  separator: "\n\n"

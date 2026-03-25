@@ -1,9 +1,9 @@
 resources:
   jobs:
-    hello_world_job:
-      name: hello-world
+    foundation_models_overview_job:
+      name: foundation_models_overview
       tags:
-        project_name: "llmops-databricks-course-ghoshp83"
+        project_name: "arxiv-curator"
 
       environments:
         - environment_key: default
@@ -13,10 +13,10 @@ resources:
               - ../dist/*.whl
 
       tasks:
-        - task_key: hello_world
+        - task_key: foundation_models_overview
           environment_key: default
           notebook_task:
-            notebook_path: ../notebooks/hello_world.py
+            notebook_path: ../notebooks/1.1_foundation_models_overview.py
             base_parameters:
               env: ${bundle.target}
               git_sha: "${var.git_sha}"
