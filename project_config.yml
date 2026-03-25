@@ -8,7 +8,7 @@ dev:
   llm_endpoint: databricks-llama-4-maverick
   embedding_endpoint: databricks-gte-large-en
   warehouse_id: 7077f4cb0e616c62
-  vector_search_endpoint: llmops_course_vs_endpoint
+  vector_search_endpoint: llmops_course_vs_endpoint_pralay
   genie_space_id: 01f113061bf41578baff744a41bd9ab0
 
 # Acceptance/Staging environment
