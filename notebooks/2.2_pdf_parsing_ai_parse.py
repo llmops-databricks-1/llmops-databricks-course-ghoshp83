@@ -9,13 +9,13 @@
 # MAGIC - Storing parsed content in Delta tables
 
 # COMMAND ----------
-#%pip install ../arxiv_curator-0.1.0-py3-none-any.whl
+# %pip install ../arxiv_curator-0.1.0-py3-none-any.whl
 # COMMAND ----------
 
-from loguru import logger
 from databricks.connect import DatabricksSession
+from loguru import logger
 
-from arxiv_curator.config import load_config, get_env
+from arxiv_curator.config import get_env, load_config
 from arxiv_curator.data_processor import DataProcessor
 
 # COMMAND ----------

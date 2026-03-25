@@ -16,7 +16,7 @@
 from loguru import logger
 from pyspark.sql import SparkSession
 
-from arxiv_curator.config import load_config, get_env
+from arxiv_curator.config import get_env, load_config
 from arxiv_curator.data_processor import DataProcessor
 from arxiv_curator.vector_search import VectorSearchManager
 
