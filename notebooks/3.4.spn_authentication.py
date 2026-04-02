@@ -1,4 +1,6 @@
 # Databricks notebook source
+import contextlib
+
 from databricks.sdk import WorkspaceClient
 from requests.auth import HTTPBasicAuth
 
@@ -15,10 +17,10 @@ w.secrets.put_secret(scope="admin", key="account_id", string_value=account_id)
 
 
 # COMMAND ----------
+import urllib
+
 import requests
 from databricks.sdk import WorkspaceClient
-from requests.auth import HTTPBasicAuth
-import urllib
 
 w = WorkspaceClient()
 
@@ -33,7 +35,7 @@ account_host = "https://accounts.cloud.databricks.com"
 token = requests.post(
     f"{account_host}/oidc/accounts/{account_id}/v1/token",
     auth=HTTPBasicAuth(admin_client_id, admin_client_secret),
-    data={"grant_type": "client_credentials", "scope": "all-apis"}
+    data={"grant_type": "client_credentials", "scope": "all-apis"},
 ).json()["access_token"]
 
 # Step 1: Create service principal + OAuth secret
@@ -49,19 +51,21 @@ client_secret = secret_resp.json()["secret"]
 # COMMAND ----------
 # Step 2: Store credentials in a secret scope
 scope_name = "arxiv-agent-scope"
-try:
+with contextlib.suppress(Exception):
     w.secrets.create_scope(scope=scope_name)
-except Exception:
-    pass  # scope already exists
 w.secrets.put_secret(scope=scope_name, key="client_id", string_value=client_id)
 w.secrets.put_secret(scope=scope_name, key="client_secret", string_value=client_secret)
 
 # COMMAND ----------
 # Step 3: Add SPN role to project
-from databricks.sdk.service.postgres import (
-    PostgresAPI, Role, RoleAuthMethod, RoleIdentityType, RoleRoleSpec,
-)
 import psycopg
+from databricks.sdk.service.postgres import (
+    PostgresAPI,
+    Role,
+    RoleAuthMethod,
+    RoleIdentityType,
+    RoleRoleSpec,
+)
 
 project_id = "arxiv-agent-lakebase"
 w = WorkspaceClient()
@@ -84,7 +88,7 @@ pg_api.create_role(
 ).wait()
 
 # COMMAND ----------
-# Step 4: Postgres role SQL 
+# Step 4: Postgres role SQL
 endpoint = next(iter(pg_api.list_endpoints(parent=branch_parent)))
 host = endpoint.status.hosts.host
 pg_credential = pg_api.generate_database_credential(endpoint=endpoint.name)

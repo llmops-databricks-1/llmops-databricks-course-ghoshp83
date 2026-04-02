@@ -9,8 +9,9 @@
 
 # COMMAND ----------
 
-from arxiv_curator.config import load_config, get_env
 from pyspark.sql import SparkSession
+
+from arxiv_curator.config import get_env, load_config
 
 spark = SparkSession.builder.getOrCreate()
 

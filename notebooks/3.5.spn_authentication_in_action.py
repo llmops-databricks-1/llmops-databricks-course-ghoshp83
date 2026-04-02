@@ -1,12 +1,13 @@
 # Databricks notebook source
 import os
-from databricks.sdk import WorkspaceClient
 from uuid import uuid4
+
+from databricks.sdk import WorkspaceClient
+from databricks.sdk.service.postgres import PostgresAPI
 from loguru import logger
 
-from arxiv_curator.memory import LakebaseMemory
 from arxiv_curator.config import ProjectConfig
-from databricks.sdk.service.postgres import PostgresAPI
+from arxiv_curator.memory import LakebaseMemory
 
 cfg = ProjectConfig.from_yaml("../project_config.yml")
 
@@ -18,7 +19,7 @@ project_id = cfg.lakebase_project_id
 scope_name = "arxiv-agent-scope"
 os.environ["LAKEBASE_SP_CLIENT_ID"] = dbutils.secrets.get(scope_name, "client_id")
 os.environ["LAKEBASE_SP_CLIENT_SECRET"] = dbutils.secrets.get(scope_name, "client_secret")
- 
+
 
 w = WorkspaceClient()
 os.environ["LAKEBASE_SP_HOST"] = w.config.host
@@ -42,7 +43,10 @@ session_id = f"test-session-{uuid4()}"
 # Save some messages
 test_messages = [
     {"role": "user", "content": "What are recent papers on transformers?"},
-    {"role": "assistant", "content": "Here are some recent papers on transformer architectures..."},
+    {
+        "role": "assistant",
+        "content": "Here are some recent papers on transformer architectures...",
+    },
     {"role": "user", "content": "Tell me more about the first one"},
 ]
 

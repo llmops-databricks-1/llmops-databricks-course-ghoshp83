@@ -32,7 +32,7 @@ from loguru import logger
 from openai import OpenAI
 from pyspark.sql import SparkSession
 
-from arxiv_curator.config import load_config, get_env
+from arxiv_curator.config import get_env, load_config
 from arxiv_curator.mcp import ToolInfo, create_mcp_tools
 from arxiv_curator.memory import LakebaseMemory
 
@@ -110,6 +110,7 @@ Guidelines:
 4. Be concise but thorough."""
 
 # COMMAND ----------
+
 
 class PralayChatResearchBot:
     """Chat agent combining MCP vector search, MCP tools, and Lakebase session memory."""
@@ -253,6 +254,7 @@ class PralayChatResearchBot:
         self._messages = []
         logger.info(f"New session started: {self.session_id}")
         return self.session_id
+
 
 # COMMAND ----------
 
