@@ -1,0 +1,23 @@
+resources:
+  jobs:
+    arxiv_agent_pg_job:
+      name: arxiv_agent_pg
+      tags:
+        project_name: "arxiv-curator"
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: build_evaluate_register
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/4.5.arxiv_agent_pg.py
+            base_parameters:
+              env: ${bundle.target}
+              git_sha: "${var.git_sha}"
+              run_id: "{{job.run_id}}"
