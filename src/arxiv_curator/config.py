@@ -23,6 +23,10 @@ class ProjectConfig(BaseModel):
     genie_space_id: str | None = Field(
         None, description="Genie space ID for MCP integration"
     )
+    experiment_name: str = Field(
+        default="/Shared/arxiv-curator-course",
+        description="MLflow experiment path",
+    )
     system_prompt: str = Field(
         default="You are a helpful AI assistant that helps users find "
         "and understand research papers.",
