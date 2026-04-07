@@ -115,6 +115,7 @@ vs_manager = VectorSearchManager(
     config=cfg,
     endpoint_name=cfg.vector_search_endpoint,
     embedding_model=cfg.embedding_endpoint,
+    usage_policy_id=cfg.usage_policy_id,
 )
 
 logger.info(f"Vector Search Endpoint: {vs_manager.endpoint_name}")
@@ -179,7 +180,7 @@ logger.info(f"  Embedding Model: {vs_manager.embedding_model}")
 # COMMAND ----------
 
 
-def parse_vector_search_results(results: dict) -> list[dict]:
+def parse_vector_search_results(results: dict):
     """Parse vector search results from array format to dict format.
 
     Args:

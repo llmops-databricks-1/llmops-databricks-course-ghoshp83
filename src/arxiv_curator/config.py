@@ -11,6 +11,7 @@ from pyspark.sql import SparkSession
 class ProjectConfig(BaseModel):
     """Project configuration model."""
 
+    usage_policy_id: str = Field(..., description="Usage policy id")
     catalog: str = Field(..., description="Unity Catalog name")
     db_schema: str = Field(..., description="Schema name", alias="schema")
     volume: str = Field(..., description="Volume name")
@@ -18,14 +19,13 @@ class ProjectConfig(BaseModel):
     embedding_endpoint: str = Field(..., description="Embedding endpoint name")
     warehouse_id: str = Field(..., description="Warehouse ID")
     vector_search_endpoint: str = Field(..., description="Vector search endpoint name")
+    lakebase_project_id: str = Field(..., description="Lakebase project id")
     genie_space_id: str | None = Field(
         None, description="Genie space ID for MCP integration"
     )
     system_prompt: str = Field(
-        default=(
-            "You are a helpful AI assistant that helps users"
-            " find and understand research papers."
-        ),
+        default="You are a helpful AI assistant that helps users find "
+        "and understand research papers.",
         description="System prompt for the agent",
     )
 
@@ -122,9 +122,7 @@ def load_config(
 
 
 def get_env(spark: SparkSession) -> str:
-    """Get current environment from dbutils widget.
-
-    Falls back to 'dev' if the widget is not set.
+    """Get current environment from dbutils widget, falling back to ENV variable or 'dev'.
 
     Returns:
         Environment name (dev, acc, or prd)
