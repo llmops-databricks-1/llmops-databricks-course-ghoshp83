@@ -41,7 +41,7 @@ scope_guideline = Guidelines(
     guidelines=[
         "The response must only discuss topics related to arxiv papers and research",
         "The response should not answer questions about unrelated topics",
-        "If asked about non-research topics, politely redirect to arxiv-related questions",
+        "If asked about non-research topics, politely redirect to arxiv questions",
     ],
     model=JUDGE_MODEL,
 )
@@ -61,7 +61,7 @@ hook_in_post_guideline = Guidelines(
 # ---------------------------------------------------------------------------
 
 
-def _extract_text(outputs) -> str:
+def _extract_text(outputs: object) -> str:
     """Normalise various output shapes to a plain string."""
     if isinstance(outputs, list) and len(outputs) > 0:
         first = outputs[0]
@@ -74,14 +74,14 @@ def _extract_text(outputs) -> str:
 
 
 @mlflow.genai.scorer
-def word_count_check(outputs) -> bool:
+def word_count_check(outputs: object) -> bool:
     """Check that the output is under 350 words."""
     text = _extract_text(outputs)
     return len(text.split()) < 350
 
 
 @mlflow.genai.scorer
-def mentions_papers(outputs) -> bool:
+def mentions_papers(outputs: object) -> bool:
     """Check if the response mentions specific papers or research."""
     text = _extract_text(outputs).lower()
     keywords = ["paper", "study", "research", "arxiv", "author", "published"]
@@ -95,7 +95,7 @@ def mentions_papers(outputs) -> bool:
 
 
 @mlflow.genai.scorer
-def quality_judge(inputs, outputs) -> int:
+def quality_judge(inputs: dict, outputs: object) -> int:
     """Evaluate response quality on a 1-5 scale using an LLM judge."""
     question = inputs.get("question", "") if isinstance(inputs, dict) else str(inputs)
     prompt = (
@@ -160,11 +160,7 @@ def evaluate_agent(
     )
 
     with open(eval_inputs_path) as f:
-        eval_data = [
-            {"inputs": {"question": line.strip()}}
-            for line in f
-            if line.strip()
-        ]
+        eval_data = [{"inputs": {"question": line.strip()}} for line in f if line.strip()]
 
     def predict_fn(question: str) -> str:
         request = {"input": [{"role": "user", "content": question}]}
@@ -188,8 +184,4 @@ def create_eval_data_from_file(eval_inputs_path: str) -> list[dict]:
         List of evaluation data dictionaries.
     """
     with open(eval_inputs_path) as f:
-        return [
-            {"inputs": {"question": line.strip()}}
-            for line in f
-            if line.strip()
-        ]
+        return [{"inputs": {"question": line.strip()}} for line in f if line.strip()]

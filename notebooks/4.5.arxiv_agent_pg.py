@@ -24,7 +24,6 @@ from uuid import uuid4
 import mlflow
 from loguru import logger
 from mlflow import MlflowClient
-from mlflow.entities import SpanType
 from mlflow.models.resources import (
     DatabricksGenieSpace,
     DatabricksServingEndpoint,
@@ -39,12 +38,6 @@ from arxiv_curator.agent import ArxivAgent
 from arxiv_curator.config import get_env, load_config
 from arxiv_curator.evaluation_pg import (
     ALL_SCORERS,
-    hook_in_post_guideline,
-    mentions_papers,
-    polite_tone_guideline,
-    quality_judge,
-    scope_guideline,
-    word_count_check,
 )
 
 # COMMAND ----------
@@ -107,10 +100,12 @@ session_id = f"pg-{timestamp}-{random.randint(100000, 999999)}"
 request_id = f"req-{timestamp}-{random.randint(100000, 999999)}"
 
 test_request = ResponsesAgentRequest(
-    input=[{
-        "role": "user",
-        "content": "What are recent papers about LLMs and reasoning?",
-    }],
+    input=[
+        {
+            "role": "user",
+            "content": "What are recent papers about LLMs and reasoning?",
+        }
+    ],
     custom_inputs={
         "session_id": session_id,
         "request_id": request_id,
@@ -131,11 +126,15 @@ logger.info(f"Agent response:\n{response.output[-1].content}")
 
 # COMMAND ----------
 
-conv_session = f"pg-conv-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{random.randint(100000, 999999)}"
+conv_session = (
+    f"pg-conv-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{random.randint(100000, 999999)}"
+)
 
 # Turn 1
 req1 = ResponsesAgentRequest(
-    input=[{"role": "user", "content": "Find papers about prompt engineering techniques"}],
+    input=[
+        {"role": "user", "content": "Find papers about prompt engineering techniques"}
+    ],
     custom_inputs={"session_id": conv_session, "request_id": f"req-1-{uuid4().hex[:8]}"},
 )
 resp1 = agent.predict(req1)
@@ -145,7 +144,9 @@ logger.info(f"Turn 1:\n{resp1.output[-1].content}")
 
 # Turn 2 — follow-up uses Lakebase memory
 req2 = ResponsesAgentRequest(
-    input=[{"role": "user", "content": "How do those compare to chain-of-thought methods?"}],
+    input=[
+        {"role": "user", "content": "How do those compare to chain-of-thought methods?"}
+    ],
     custom_inputs={"session_id": conv_session, "request_id": f"req-2-{uuid4().hex[:8]}"},
 )
 resp2 = agent.predict(req2)
@@ -168,11 +169,7 @@ logger.info(f"Turn 2:\n{resp2.output[-1].content}")
 
 # Load evaluation inputs
 with open("../eval_inputs.txt") as f:
-    eval_data = [
-        {"inputs": {"question": line.strip()}}
-        for line in f
-        if line.strip()
-    ]
+    eval_data = [{"inputs": {"question": line.strip()}} for line in f if line.strip()]
 
 logger.info(f"Evaluation dataset: {len(eval_data)} questions")
 
@@ -215,9 +212,7 @@ display(eval_df.drop(columns=drop_cols, errors="ignore"))
 resources = [
     DatabricksServingEndpoint(endpoint_name=cfg.llm_endpoint),
     DatabricksGenieSpace(genie_space_id=cfg.genie_space_id),
-    DatabricksVectorSearchIndex(
-        index_name=f"{cfg.catalog}.{cfg.schema}.arxiv_index"
-    ),
+    DatabricksVectorSearchIndex(index_name=f"{cfg.catalog}.{cfg.schema}.arxiv_index"),
     DatabricksTable(table_name=f"{cfg.catalog}.{cfg.schema}.arxiv_papers"),
     DatabricksSQLWarehouse(warehouse_id=cfg.warehouse_id),
     DatabricksServingEndpoint(endpoint_name="databricks-bge-large-en"),
