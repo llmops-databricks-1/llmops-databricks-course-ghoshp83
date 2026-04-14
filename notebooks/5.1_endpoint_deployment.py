@@ -14,6 +14,7 @@
 # COMMAND ----------
 
 import os
+
 import mlflow
 from databricks import agents
 from databricks.sdk import WorkspaceClient
@@ -25,6 +26,7 @@ from arxiv_curator.config import ProjectConfig
 # Setup MLflow tracking
 if "DATABRICKS_RUNTIME_VERSION" not in os.environ:
     from dotenv import load_dotenv
+
     load_dotenv()
     profile = os.environ.get("PROFILE", "DEFAULT")
     mlflow.set_tracking_uri(f"databricks://{profile}")
@@ -36,8 +38,9 @@ model_name = f"{cfg.catalog}.{cfg.schema}.arxiv_agent_pg"
 endpoint_name = "arxiv-agent-endpoint-dev-course"
 secret_scope = "arxiv-agent-scope"
 
-model_version = MlflowClient().get_model_version_by_alias(
-    model_name, "latest-model").version
+model_version = (
+    MlflowClient().get_model_version_by_alias(model_name, "latest-model").version
+)
 
 workspace = WorkspaceClient()
 experiment = MlflowClient().get_experiment_by_name(cfg.experiment_name)
@@ -87,6 +90,7 @@ agents.deploy(
 
 import random
 from datetime import datetime
+
 from openai import OpenAI
 
 host = workspace.config.host
@@ -106,10 +110,12 @@ response = client.responses.create(
     input=[
         {"role": "user", "content": "What are recent papers about LLMs and reasoning?"}
     ],
-    extra_body={"custom_inputs": {
-        "session_id": session_id,
-        "request_id": request_id,
-    }}
+    extra_body={
+        "custom_inputs": {
+            "session_id": session_id,
+            "request_id": request_id,
+        }
+    },
 )
 
 logger.info(f"Response ID: {response.id}")

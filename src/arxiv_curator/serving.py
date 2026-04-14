@@ -56,7 +56,9 @@ def serve_model(
     )
 
     workspace = WorkspaceClient()
-    endpoint_exists = any(item.name == endpoint_name for item in workspace.serving_endpoints.list())
+    endpoint_exists = any(
+        item.name == endpoint_name for item in workspace.serving_endpoints.list()
+    )
 
     if not endpoint_exists:
         print(f"Creating serving endpoint: {endpoint_name}")
