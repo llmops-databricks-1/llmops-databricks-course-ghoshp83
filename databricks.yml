@@ -24,6 +24,11 @@ variables:
 include:
   - resources/*.yml
 
+sync:
+  include:
+    - eval_inputs.txt
+    - project_config.yml
+
 targets:
   dev:
     default: true

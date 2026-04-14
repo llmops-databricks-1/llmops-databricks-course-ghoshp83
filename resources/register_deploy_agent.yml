@@ -1,11 +1,7 @@
 resources:
   jobs:
-    data-pipeline:
-      name: arxiv-data-pipeline
-      schedule:
-        quartz_cron_expression: "0 0 6 * * ?"
-        timezone_id: "Europe/London"
-        pause_status: ${var.schedule_pause_status}
+    register_deploy_agent:
+      name: arxiv-agent-register-deploy-pipeline
       tags:
         project_name: "arxiv-curator"
         environment: ${bundle.target}
@@ -17,21 +13,21 @@ resources:
               - ../dist/*.whl
 
       tasks:
-        - task_key: arxiv_data_ingestion
+        - task_key: log_register_agent
           environment_key: default
           notebook_task:
-            notebook_path: ../notebooks/1.3_arxiv_data_ingestion.py
+            notebook_path: deployment_scripts/log_register_agent.py
             base_parameters:
               env: ${bundle.target}
               git_sha: "${var.git_sha}"
               run_id: "{{job.run_id}}"
 
-        - task_key: preprocessing
+        - task_key: deploy_agent
           depends_on:
-            - task_key: arxiv_data_ingestion
+            - task_key: log_register_agent
           environment_key: default
           notebook_task:
-            notebook_path: deployment_scripts/process_data.py
+            notebook_path: deployment_scripts/deploy_agent.py
             base_parameters:
               env: ${bundle.target}
               git_sha: "${var.git_sha}"
