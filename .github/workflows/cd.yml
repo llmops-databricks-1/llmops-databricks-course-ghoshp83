@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+      - week5_submission
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
