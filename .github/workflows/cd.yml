@@ -32,16 +32,6 @@ jobs:
       - name: Install Databricks CLI
         uses: databricks/setup-cli@main
 
-      - name: Configure Databricks CLI
-        run: |
-          mkdir -p ~/.databricks
-          cat > ~/.databrickscfg << EOF
-          [DEFAULT]
-          host = ${{ vars.DATABRICKS_HOST }}
-          client_id = ${{ secrets.DATABRICKS_CLIENT_ID }}
-          client_secret = ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-          EOF
-
       - name: Install uv
         uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182 #v5.4.1
 
