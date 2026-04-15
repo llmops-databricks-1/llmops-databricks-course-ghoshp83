@@ -33,7 +33,7 @@ dev:
   warehouse_id: 96e26e80fcd91931
   vector_search_endpoint: llmops_course_vs_endpoint
   genie_space_id: "01f12d9eb2d3152f9ca186a558ba7378"
-  usage_policy_id: 4f4f43f7-3b6f-4f0a-9dd3-f8a271a90fb3                   
+  usage_policy_id: 4f4f43f7-3b6f-4f0a-9dd3-f8a271a90fb3
   lakebase_project_id: arxiv-agent-lakebase-pg
   experiment_name: /Shared/arxiv-curator-course-pg
 

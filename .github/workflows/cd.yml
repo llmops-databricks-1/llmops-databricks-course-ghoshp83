@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - main
-      - week5_submission
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -15,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [dev]
+        environment: [dev, acc]
     environment: ${{ matrix.environment }}
     permissions:
       contents: write # to push tag
@@ -23,7 +19,6 @@ jobs:
       DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
       DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
       DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-      DATABRICKS_AUTH_TYPE: oauth-m2m
       DEPLOY_TARGET: ${{ matrix.environment }}
     steps:
       - name: Checkout Source Code
