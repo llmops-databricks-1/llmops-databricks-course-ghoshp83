@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - week5_submission
+      - Maria_test
   pull_request:
     branches:
       - main
