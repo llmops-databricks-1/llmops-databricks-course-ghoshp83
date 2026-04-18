@@ -33,20 +33,23 @@ dev:
   warehouse_id: 96e26e80fcd91931
   vector_search_endpoint: llmops_course_vs_endpoint
   genie_space_id: "01f12d9eb2d3152f9ca186a558ba7378"
-  usage_policy_id: 686c435d-90af-4c40-9ca4-442d4a3d8899
+  usage_policy_id: 4f4f43f7-3b6f-4f0a-9dd3-f8a271a90fb3
   lakebase_project_id: arxiv-agent-lakebase-pg
   experiment_name: /Shared/arxiv-curator-course-pg
 
 # Acceptance/Staging environment
 acc:
-  catalog: llmops_dev
-  schema: arxiv
+  catalog: mlops_dev
+  schema: pralaygh
   volume: arxiv_files
-  llm_endpoint: databricks-meta-llama-3-1-70b-instruct
+  llm_endpoint: databricks-llama-4-maverick
   embedding_endpoint: databricks-gte-large-en
-  warehouse_id: 7077f4cb0e616c62
+  warehouse_id: 96e26e80fcd91931
   vector_search_endpoint: llmops_course_vs_endpoint
-  genie_space_id: 01f113061bf41578baff744a41bd9ab0
+  genie_space_id: "01f12d9eb2d3152f9ca186a558ba7378"
+  usage_policy_id: 4f4f43f7-3b6f-4f0a-9dd3-f8a271a90fb3
+  lakebase_project_id: arxiv-agent-lakebase-pg
+  experiment_name: /Shared/arxiv-curator-course-pg
 
 # Production environment
 prd:

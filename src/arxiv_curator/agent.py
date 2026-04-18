@@ -306,7 +306,7 @@ def log_register_agent(
         ]
     }
 
-    mlflow.set_experiment(cfg.experiment_path)
+    mlflow.set_experiment(cfg.experiment_name)
     ts = datetime.now().strftime("%Y-%m-%d")
 
     with mlflow.start_run(

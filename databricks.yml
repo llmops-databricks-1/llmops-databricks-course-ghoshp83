@@ -24,15 +24,20 @@ variables:
 include:
   - resources/*.yml
 
+sync:
+  include:
+    - eval_inputs.txt
+    - project_config.yml
+
 targets:
   dev:
-    default: true
     mode: development
     workspace:
-      host: https://dbc-b1b2f91a-d102.cloud.databricks.com/
+      host: https://dbc-b1b2f91a-d102.cloud.databricks.com
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.target}/${bundle.name}
 
   acc:
+    mode: production
     workspace:
       host: https://dbc-b1b2f91a-d102.cloud.databricks.com
       root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
