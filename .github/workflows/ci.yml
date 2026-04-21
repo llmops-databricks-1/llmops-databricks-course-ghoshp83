@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - main
-      - lecture5
-      - week5_submission
+      - week6_submission
   workflow_dispatch:
 
 jobs:
