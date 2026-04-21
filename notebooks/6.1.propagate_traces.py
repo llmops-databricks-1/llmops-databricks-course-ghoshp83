@@ -60,13 +60,13 @@ for i, query in enumerate(queries):
     print(f"[{i + 1}/30] {query[:60]}...")
     response = client.responses.create(
         model=endpoint_name,
-        input=[
-            {"role": "user", "content": query}
-        ],
-        extra_body={"custom_inputs": {
-            "session_id": session_id,
-            "request_id": request_id,
-        }},
+        input=[{"role": "user", "content": query}],
+        extra_body={
+            "custom_inputs": {
+                "session_id": session_id,
+                "request_id": request_id,
+            }
+        },
     )
     time.sleep(2)
 
