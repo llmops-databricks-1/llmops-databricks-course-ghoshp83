@@ -64,7 +64,7 @@ w.warehouses.set_permissions(
 # Uses a separate WorkspaceClient authenticated as the dev SPN so it has
 # CAN_MANAGE on the SPN-owned jobs (your personal user does not).
 # The below code is used to get read access to see SPN based deployment in DBR workspace.
-# It is manual and on-demand basis and option if only one needs it. Uncomment it as needed
+# It is manual and on-demand basis and optional if only one needs it. Uncomment it as needed
 
 # developer_user_name = "pralay.ghosh@gmail.com"
 
