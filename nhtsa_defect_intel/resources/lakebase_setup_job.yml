@@ -1,0 +1,28 @@
+resources:
+  jobs:
+    lakebase_setup_job:
+      name: nhtsa_lakebase_setup
+      tags:
+        project_name: "nhtsa-curator"
+        layer: "agent_memory"
+
+      # Intentionally **no schedule** — this is a one-time-per-env
+      # bootstrap. Re-run manually when `DDL_STATEMENTS` changes. If we
+      # ever add a true migration system (Alembic etc.), this job
+      # transitions from one-shot to idempotent-migration-on-deploy.
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: init_lakebase
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/4.2_lakebase_setup.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"

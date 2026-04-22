@@ -1,0 +1,75 @@
+resources:
+  jobs:
+    eval_workflow:
+      name: nhtsa_agent_eval
+      tags:
+        project_name: "nhtsa-curator"
+        layer: "eval"
+
+      # Runs after the agent_smoke_job (18 UTC) + two hours. This gives
+      # the vector index and Genie cache time to warm, so eval latency
+      # doesn't double-count cold-start. Weekly cadence on Mondays —
+      # daily is overkill when the underlying gold tables refresh
+      # nightly but the system prompt + eval set change much less
+      # often. Promotion gates run this job on-demand via `bundle run`
+      # instead of waiting for the cron.
+      schedule:
+        quartz_cron_expression: "0 0 20 ? * MON"
+        timezone_id: "UTC"
+        pause_status: ${var.schedule_pause_status}
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      parameters:
+        - name: tier
+          default: "all"
+        - name: use_judge
+          default: "true"
+        - name: gold_delta_version
+          default: ""
+
+      tasks:
+        - task_key: run_eval_all_tiers
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/5.1_run_eval.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"
+              tier: "{{job.parameters.tier}}"
+              use_judge: "{{job.parameters.use_judge}}"
+              gold_delta_version: "{{job.parameters.gold_delta_version}}"
+
+          # The notebook raises AssertionError on exit-check failure.
+          # We surface that as a hard task failure so the workflow
+          # status reflects the eval outcome.
+          max_retries: 0
+          timeout_seconds: 7200  # 2h ceiling — well above typical 25-question runtime
+
+        # Triage the run the first task just produced. Reads MLflow
+        # artifacts only (no agent re-run), joins against local TSV
+        # ground truth, and prints per-question tier-1/2/3 tables.
+        - task_key: triage_eval_results
+          environment_key: default
+          depends_on:
+            - task_key: run_eval_all_tiers
+          # ALL_DONE so triage still runs when the exit-check assertion
+          # in 5.1 fails — that's exactly when we want the failure
+          # breakdown, not when everything already passed.
+          run_if: ALL_DONE
+          notebook_task:
+            notebook_path: ../notebooks/5.2_eval_triage.py
+            base_parameters:
+              env: ${bundle.target}
+              # Pin triage to the MLflow run tagged with this job run
+              # so we never accidentally read a stale older run.
+              run_id_filter: "{{job.run_id}}"
+              max_tier1_scored: "25"
+              max_tier2_failures: "10"
+          max_retries: 0
+          timeout_seconds: 1800

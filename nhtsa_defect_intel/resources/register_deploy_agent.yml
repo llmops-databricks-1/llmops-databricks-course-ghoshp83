@@ -1,0 +1,33 @@
+resources:
+  jobs:
+    register_deploy_agent:
+      name: nhtsa-agent-register-deploy-pipeline
+      tags:
+        project_name: "nhtsa-defect-intel"
+        environment: ${bundle.target}
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: log_register_agent
+          environment_key: default
+          notebook_task:
+            notebook_path: deployment_scripts/log_register_agent.py
+            base_parameters:
+              env: ${bundle.target}
+              git_sha: "${var.git_sha}"
+              run_id: "{{job.run_id}}"
+
+        - task_key: deploy_agent
+          depends_on:
+            - task_key: log_register_agent
+          environment_key: default
+          notebook_task:
+            notebook_path: deployment_scripts/deploy_agent.py
+            base_parameters:
+              env: ${bundle.target}
+              git_sha: "${var.git_sha}"

@@ -1,0 +1,10 @@
+# Seed evaluation inputs (one question per line).
+# Phase 5 will replace this with a curated YAML eval set with expected answers.
+How many open NHTSA investigations were initiated in 2025 involving battery thermal events on electric vehicles?
+What are the top 5 components by complaint volume for model year 2023 Tesla Model Y?
+Compare brake-related recall counts in 2024 between Toyota, Ford, and Hyundai.
+Summarize the latest TSBs issued for the 2022 Ford F-150 powertrain.
+Which OEMs have the most SGO-reported ADAS-involved crashes in 2025?
+For NHTSA campaign 23V-456, what is the defect, the remedy, and the number of vehicles affected?
+What emerging defect themes appear in 2025 complaints for the 2024 Hyundai Ioniq 5?
+List recall queries (RQ) opened by ODI in the last 12 months involving steering loss.

@@ -1,0 +1,500 @@
+{
+  "datasets": [
+    {
+      "name": "agg_traces",
+      "displayName": "nhtsa_traces_aggregated_pg",
+      "queryLines": [
+        "SELECT * FROM mlops_dev.pralaygh.nhtsa_traces_aggregated_pg WHERE request_time > TIMESTAMP '2026-04-20 21:00:00'"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "main",
+      "displayName": "NHTSA Defect Intelligence — Agent Monitoring",
+      "layout": [
+        {
+          "widget": {
+            "name": "title",
+            "multilineTextboxSpec": {
+              "lines": [
+                "<div style=\"display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; min-height: 80px;\">",
+                "<div style=\"font-size: 32px; line-height: 1.4; font-weight: bold;\">NHTSA Defect Intelligence — Agent Monitoring</div>",
+                "<div style=\"font-size: 14px; color: #666;\">Live traces from the nhtsa-agent-endpoint, scored hourly.</div>",
+                "</div>"
+              ]
+            }
+          },
+          "position": {"x": 0, "y": 0, "width": 12, "height": 2}
+        },
+
+        {
+          "widget": {
+            "name": "kpi_total_traces",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "agg_traces",
+                  "fields": [
+                    {"name": "count_traces", "expression": "COUNT(`trace_id`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {"showTitle": true, "title": "Total traces scored"},
+              "encodings": {"value": {"fieldName": "count_traces"}}
+            }
+          },
+          "position": {"x": 0, "y": 2, "width": 3, "height": 2}
+        },
+        {
+          "widget": {
+            "name": "kpi_cite_rate",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "agg_traces",
+                  "fields": [
+                    {"name": "cite_rate", "expression": "AVG(`cite_id_present`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {"showTitle": true, "title": "% answers with NHTSA source id"},
+              "encodings": {
+                "value": {
+                  "fieldName": "cite_rate",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {"type": "exact", "places": 1}
+                  }
+                }
+              }
+            }
+          },
+          "position": {"x": 3, "y": 2, "width": 3, "height": 2}
+        },
+        {
+          "widget": {
+            "name": "kpi_oem_rate",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "agg_traces",
+                  "fields": [
+                    {"name": "oem_rate", "expression": "AVG(`mentions_oem`)"}
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {"showTitle": true, "title": "% answers mentioning an OEM"},
+              "encodings": {
+                "value": {
+                  "fieldName": "oem_rate",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {"type": "exact", "places": 1}
+                  }
+                }
+              }
+            }
+          },
+          "position": {"x": 6, "y": 2, "width": 3, "height": 2}
+        },
+        {
+          "widget": {
+            "name": "kpi_p95_latency",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "agg_traces",
+                  "fields": [
+                    {
+                      "name": "p95_latency",
+                      "expression": "PERCENTILE(`latency_seconds`, 0.95)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "frame": {"showTitle": true, "title": "p95 latency (s)"},
+              "encodings": {
+                "value": {
+                  "fieldName": "p95_latency",
+                  "format": {
+                    "type": "number-plain",
+                    "decimalPlaces": {"type": "exact", "places": 2}
+                  }
+                }
+              }
+            }
+          },
+          "position": {"x": 9, "y": 2, "width": 3, "height": 2}
+        },
+
+        {
+          "widget": {
+            "name": "latency_over_time",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "agg_traces",
+                  "fields": [
+                    {
+                      "name": "minutely(request_time)",
+                      "expression": "DATE_TRUNC(\"MINUTE\", `request_time`)"
+                    },
+                    {
+                      "name": "avg_latency",
+                      "expression": "AVG(`latency_seconds`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "frame": {"showTitle": true, "title": "Avg latency (s) over time"},
+              "encodings": {
+                "x": {
+                  "fieldName": "minutely(request_time)",
+                  "scale": {"type": "temporal"}
+                },
+                "y": {
+                  "fieldName": "avg_latency",
+                  "scale": {"type": "quantitative"}
+                }
+              }
+            }
+          },
+          "position": {"x": 0, "y": 4, "width": 6, "height": 4}
+        },
+        {
+          "widget": {
+            "name": "tokens_over_time",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "agg_traces",
+                  "fields": [
+                    {
+                      "name": "minutely(request_time)",
+                      "expression": "DATE_TRUNC(\"MINUTE\", `request_time`)"
+                    },
+                    {
+                      "name": "sum_tokens",
+                      "expression": "SUM(`total_tokens_used`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "frame": {"showTitle": true, "title": "Tokens used per minute"},
+              "encodings": {
+                "x": {
+                  "fieldName": "minutely(request_time)",
+                  "scale": {"type": "temporal"}
+                },
+                "y": {
+                  "fieldName": "sum_tokens",
+                  "scale": {"type": "quantitative"}
+                }
+              }
+            }
+          },
+          "position": {"x": 6, "y": 4, "width": 6, "height": 4}
+        },
+
+        {
+          "widget": {
+            "name": "tool_mix",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "agg_traces",
+                  "fields": [
+                    {"name": "genie_total", "expression": "SUM(`genie_call_count`)"},
+                    {"name": "vs_total", "expression": "SUM(`vs_call_count`)"},
+                    {"name": "fetch_tsb_total", "expression": "SUM(`fetch_tsb_count`)"},
+                    {
+                      "name": "fetch_investigation_total",
+                      "expression": "SUM(`fetch_investigation_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": "Tool-call mix (cumulative across all traces)"
+              },
+              "encodings": {
+                "columns": [
+                  {"fieldName": "genie_total", "displayName": "Genie (SQL)"},
+                  {"fieldName": "vs_total", "displayName": "Vector Search"},
+                  {"fieldName": "fetch_tsb_total", "displayName": "fetch_tsb"},
+                  {
+                    "fieldName": "fetch_investigation_total",
+                    "displayName": "fetch_investigation"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {"x": 0, "y": 8, "width": 6, "height": 4}
+        },
+        {
+          "widget": {
+            "name": "cite_rate_over_time",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "agg_traces",
+                  "fields": [
+                    {
+                      "name": "hourly(request_time)",
+                      "expression": "DATE_TRUNC(\"HOUR\", `request_time`)"
+                    },
+                    {
+                      "name": "avg_cite",
+                      "expression": "AVG(`cite_id_present`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "frame": {
+                "showTitle": true,
+                "title": "% answers with a cited NHTSA source id over time"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "hourly(request_time)",
+                  "scale": {"type": "temporal"}
+                },
+                "y": {
+                  "fieldName": "avg_cite",
+                  "format": {
+                    "type": "number-percent",
+                    "decimalPlaces": {"type": "exact", "places": 1}
+                  },
+                  "scale": {"type": "quantitative"}
+                }
+              }
+            }
+          },
+          "position": {"x": 6, "y": 8, "width": 6, "height": 4}
+        },
+
+        {
+          "widget": {
+            "name": "judge_outcomes",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "agg_traces",
+                  "fields": [
+                    {
+                      "name": "factual_defect_rate",
+                      "expression": "AVG(`factual_defect`)"
+                    },
+                    {
+                      "name": "cite_every_claim_rate",
+                      "expression": "AVG(`cite_every_claim`)"
+                    },
+                    {
+                      "name": "stays_in_scope_rate",
+                      "expression": "AVG(`stays_in_scope`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {
+                "showTitle": true,
+                "title": "LLM-judge pass rate (10% sample)"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "factual_defect_rate",
+                    "displayName": "factual_defect"
+                  },
+                  {
+                    "fieldName": "cite_every_claim_rate",
+                    "displayName": "cite_every_claim"
+                  },
+                  {
+                    "fieldName": "stays_in_scope_rate",
+                    "displayName": "stays_in_scope"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {"x": 0, "y": 12, "width": 6, "height": 4}
+        },
+        {
+          "widget": {
+            "name": "tool_calls_over_time",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "agg_traces",
+                  "fields": [
+                    {
+                      "name": "hourly(request_time)",
+                      "expression": "DATE_TRUNC(\"HOUR\", `request_time`)"
+                    },
+                    {
+                      "name": "avg_tool_calls",
+                      "expression": "AVG(`tool_call_count`)"
+                    },
+                    {
+                      "name": "avg_llm_calls",
+                      "expression": "AVG(`call_llm_exec_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "frame": {
+                "showTitle": true,
+                "title": "Avg tool / LLM calls per trace"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "hourly(request_time)",
+                  "scale": {"type": "temporal"}
+                },
+                "y": {
+                  "fields": [
+                    {"fieldName": "avg_tool_calls", "displayName": "avg tool calls"},
+                    {"fieldName": "avg_llm_calls", "displayName": "avg LLM calls"}
+                  ],
+                  "scale": {"type": "quantitative"}
+                }
+              }
+            }
+          },
+          "position": {"x": 6, "y": 12, "width": 6, "height": 4}
+        },
+
+        {
+          "widget": {
+            "name": "trace_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "agg_traces",
+                  "fields": [
+                    {"name": "trace_id", "expression": "`trace_id`"},
+                    {"name": "request_time", "expression": "`request_time`"},
+                    {"name": "session_id", "expression": "`session_id`"},
+                    {
+                      "name": "latency_seconds",
+                      "expression": "`latency_seconds`"
+                    },
+                    {
+                      "name": "tool_call_count",
+                      "expression": "`tool_call_count`"
+                    },
+                    {
+                      "name": "cite_id_present",
+                      "expression": "`cite_id_present`"
+                    },
+                    {
+                      "name": "mentions_oem",
+                      "expression": "`mentions_oem`"
+                    },
+                    {
+                      "name": "total_tokens_used",
+                      "expression": "`total_tokens_used`"
+                    }
+                  ],
+                  "disaggregated": true,
+                  "orders": [
+                    {"fieldName": "request_time", "direction": "DESC"}
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "frame": {"showTitle": true, "title": "Trace-level drilldown"},
+              "encodings": {
+                "columns": [
+                  {"fieldName": "trace_id"},
+                  {"fieldName": "request_time"},
+                  {"fieldName": "session_id"},
+                  {"fieldName": "latency_seconds"},
+                  {"fieldName": "tool_call_count"},
+                  {"fieldName": "cite_id_present"},
+                  {"fieldName": "mentions_oem"},
+                  {"fieldName": "total_tokens_used"}
+                ]
+              }
+            }
+          },
+          "position": {"x": 0, "y": 16, "width": 12, "height": 6}
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {"widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"},
+    "applyModeEnabled": false
+  }
+}

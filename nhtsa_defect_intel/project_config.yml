@@ -1,0 +1,121 @@
+# Project configuration for the NHTSA Defect Intelligence Agent.
+# Placeholders use the same dev/acc/prd targets as the reference project.
+# Update workspace-specific IDs before first deployment.
+
+system_prompt: |
+  You are a vehicle defect intelligence assistant. You help analysts,
+  regulators, OEM quality teams, and journalists explore NHTSA open data
+  on safety recalls, consumer complaints, agency investigations, and
+  Technical Service Bulletins (TSBs).
+
+  Your role is to:
+  1. Use the Genie tool to run SQL over the structured fact tables
+     (recalls, complaints, investigations, TSB metadata, SGO AV crashes)
+     for counts, trends, and aggregations.
+  2. Use the Vector Search tool to retrieve relevant complaint narratives,
+     TSB descriptions, and investigation document chunks for qualitative
+     evidence.
+  3. Use the fetch_tsb_document tool to pull the full text of a TSB or
+     investigation document when a citation requires it.
+  4. Compose answers that combine quantitative findings with qualitative
+     evidence, and ALWAYS cite source IDs (recall campaign #, complaint
+     ODI ID, investigation #, TSB #) inline.
+
+  When the question is ambiguous (e.g. "EVs"), state your interpretation
+  and ask one clarifying question only if it materially changes the
+  answer. Otherwise proceed with a reasonable default and flag it.
+
+  If conversation history is provided, use it to maintain continuity:
+  refer to prior filters, refine prior answers, do not repeat yourself.
+
+  TOOL-CALL PROTOCOL (strict): When you need a tool, invoke it via the
+  structured tool-calls API of this serving endpoint. NEVER write
+  function-call syntax such as `genie_recalls(question="...")` or
+  `vector_search_narrative(...)` as plain text in your response. Your
+  message content must be either (a) a final natural-language answer to
+  the user, or (b) empty when you are dispatching tool calls through
+  the structured API. Plain-text function calls will not be executed
+  and will be shown verbatim to the user, which is a failure mode.
+
+# Development environment
+dev:
+  catalog: mlops_dev
+  schema: pralaygh
+  volume: nhtsa_files
+  llm_endpoint: databricks-llama-4-maverick
+  embedding_endpoint: databricks-gte-large-en
+  warehouse_id: 96e26e80fcd91931
+  vector_search_endpoint: llmops_course_vs_endpoint
+  genie_space_id: "01f13b775eef1f7ebd44fa63a28d7db6"
+  usage_policy_id: 4f4f43f7-3b6f-4f0a-9dd3-f8a271a90fb3
+  lakebase_project_id: nhtsa-agent-lakebase-pg
+  experiment_name: /Shared/nhtsa-curator-course-pg
+
+# Acceptance/Staging environment
+acc:
+  catalog: mlops_dev
+  schema: pralaygh_nhtsa
+  volume: nhtsa_files
+  llm_endpoint: databricks-llama-4-maverick
+  embedding_endpoint: databricks-gte-large-en
+  warehouse_id: 96e26e80fcd91931
+  vector_search_endpoint: llmops_course_vs_endpoint
+  genie_space_id: "PLACEHOLDER_ACC_GENIE_SPACE_ID"
+  usage_policy_id: 4f4f43f7-3b6f-4f0a-9dd3-f8a271a90fb3
+  lakebase_project_id: nhtsa-agent-lakebase-pg
+  experiment_name: /Shared/nhtsa-curator-course-pg
+
+# Production environment
+prd:
+  catalog: llmops_dev
+  schema: nhtsa
+  volume: nhtsa_files
+  llm_endpoint: databricks-meta-llama-3-1-70b-instruct
+  embedding_endpoint: databricks-gte-large-en
+  warehouse_id: 7077f4cb0e616c62
+  vector_search_endpoint: llmops_course_vs_endpoint
+  genie_space_id: "PLACEHOLDER_PRD_GENIE_SPACE_ID"
+
+# Model configuration
+model_config:
+  temperature: 0.2          # lower than arxiv (0.7) — defect answers must be factual
+  max_tokens: 2000
+  top_p: 0.95
+
+# Vector search configuration
+vector_search:
+  embedding_dimension: 1024
+  similarity_metric: cosine
+  num_results: 8            # higher than arxiv (5) — defect questions often need more evidence
+
+# Chunking configuration
+chunking:
+  chunk_size: 800           # TSBs are denser than abstracts; larger chunks preserve procedural context
+  chunk_overlap: 100
+  separator: "\n\n"
+
+# NHTSA data sources — endpoints + refresh cadences
+nhtsa_sources:
+  recalls_api: "https://api.nhtsa.gov/recalls/recallsByVehicle"
+  complaints_api: "https://api.nhtsa.gov/complaints/complaintsByVehicle"
+  recalls_bulk_csv: "https://static.nhtsa.gov/odi/ffdd/rcl/FLAT_RCL_POST_2010.zip"
+  complaints_bulk_csv: "https://static.nhtsa.gov/odi/ffdd/cmpl/FLAT_CMPL.zip"
+  investigations_bulk_csv: "https://static.nhtsa.gov/odi/ffdd/inv/FLAT_INV.zip"
+  # NHTSA split the TSB dump into 5-year chunks (May 2024 MfrComms rewrite).
+  # List covers the full range; append new windows as NHTSA publishes them.
+  tsbs_bulk_csv:
+    - "https://static.nhtsa.gov/odi/ffdd/tsbs/TSBS_RECEIVED_1995-1999.zip"
+    - "https://static.nhtsa.gov/odi/ffdd/tsbs/TSBS_RECEIVED_2000-2004.zip"
+    - "https://static.nhtsa.gov/odi/ffdd/tsbs/TSBS_RECEIVED_2005-2009.zip"
+    - "https://static.nhtsa.gov/odi/ffdd/tsbs/TSBS_RECEIVED_2010-2014.zip"
+    - "https://static.nhtsa.gov/odi/ffdd/tsbs/TSBS_RECEIVED_2015-2019.zip"
+    - "https://static.nhtsa.gov/odi/ffdd/tsbs/TSBS_RECEIVED_2020-2024.zip"
+    - "https://static.nhtsa.gov/odi/ffdd/tsbs/TSBS_RECEIVED_2025-2026.zip"
+  # NHTSA SGO publishes two cumulative CSVs: ADS (SAE L3-5 robotaxis) and
+  # ADAS (SAE L2 consumer). The file-downloads "?p=" URL is a directory
+  # listing page and returns 403 to scripts, so point at the direct CSVs
+  # on static.nhtsa.gov.
+  sgo_av_csv:
+    - "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADS.csv"
+    - "https://static.nhtsa.gov/odi/ffdd/sgo-2021-01/SGO-2021-01_Incident_Reports_ADAS.csv"
+  ingestion_cadence_days: 1

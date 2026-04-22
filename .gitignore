@@ -97,3 +97,8 @@ dmypy.json
 .history
 
 **/uv.lock
+**/tests/__pycache__
+**/docs/
+**/mlruns/
+**/mlflow.db
+**/src/*.egg-info/

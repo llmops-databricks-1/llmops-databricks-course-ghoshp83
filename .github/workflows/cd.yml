@@ -8,21 +8,35 @@ on:
     branches:
       - main
   workflow_dispatch:
+      inputs:
+        project:
+          description: 'Which project to run?'
+          required: true
+          default: 'arxiv_curator'
+          type: choice
+          options:
+            - arxiv_curator
+            - nhtsa_defect_intel
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      ACTIVE_PROJECT: arxiv_curator
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      DEPLOY_TARGET: ${{ matrix.environment }}
     strategy:
       matrix:
         environment: [acc]
     environment: ${{ matrix.environment }}
     permissions:
       contents: write # to push tag
-    env:
-      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
-      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
-      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
-      DEPLOY_TARGET: ${{ matrix.environment }}
+    # Set the context to the specific project folder
+    defaults:
+      run:
+        working-directory: ${{ github.event.inputs.project || env.ACTIVE_PROJECT }}
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2

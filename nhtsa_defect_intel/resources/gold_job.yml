@@ -1,0 +1,39 @@
+resources:
+  jobs:
+    gold_job:
+      name: nhtsa_gold_build
+      tags:
+        project_name: "nhtsa-curator"
+        layer: "gold"
+
+      # Runs after silver_job at 11 UTC; 14 UTC gives silver ~3h to drain.
+      schedule:
+        quartz_cron_expression: "0 0 14 * * ?"
+        timezone_id: "UTC"
+        pause_status: ${var.schedule_pause_status}
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: gold_dimensions_facts
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/2.7_gold_dimensions_facts.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"
+
+        - task_key: gold_narrative_chunks
+          environment_key: default
+          depends_on:
+            - task_key: gold_dimensions_facts
+          notebook_task:
+            notebook_path: ../notebooks/2.8_gold_narrative_chunks.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"

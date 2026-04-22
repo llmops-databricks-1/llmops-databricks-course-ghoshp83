@@ -1,0 +1,34 @@
+resources:
+  jobs:
+    ingestion_investigation_documents_job:
+      name: nhtsa_investigation_documents_scrape
+      tags:
+        project_name: "nhtsa-curator"
+        dataset: "investigation_documents"
+        layer: "bronze"
+
+      # Runs after investigations ingestion (08:00 UTC) and before the
+      # silver job (11:00 UTC). The scraper is bounded by
+      # max_docs_per_run so the backlog drains across successive runs.
+      schedule:
+        quartz_cron_expression: "0 0 9 * * ?"
+        timezone_id: "UTC"
+        pause_status: ${var.schedule_pause_status}
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: investigation_documents_scrape
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/1.6_investigation_documents_scrape.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"
+              max_docs_per_run: "200"
+              listing_url_template: "https://api.nhtsa.gov/odi/actions/{action_number}/documents"
