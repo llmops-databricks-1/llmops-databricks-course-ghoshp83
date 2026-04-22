@@ -6,10 +6,26 @@ on:
       - main
       - demo_submission
   workflow_dispatch:
+      inputs:
+        project:
+          description: 'Which project to run?'
+          required: true
+          default: 'arxiv_curator'
+          type: choice
+          options:
+            - arxiv_curator
+            - nhtsa_defect_intel
+
 
 jobs:
   pytest_and_checks:
     runs-on: ubuntu-latest
+    env:
+      # CHANGE THIS LINE ONLY to switch projects for automatic pushes
+      ACTIVE_PROJECT: arxiv_curator 
+    defaults:
+      run:
+        working-directory: ${{ github.event.inputs.project || env.ACTIVE_PROJECT }}
     steps:
       - uses: actions/checkout@v4
 
