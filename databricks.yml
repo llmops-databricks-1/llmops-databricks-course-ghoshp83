@@ -20,9 +20,13 @@ variables:
   schedule_pause_status:
     description: schedule pause status
     default: PAUSED
+  warehouse_id:
+    description: SQL warehouse ID for dashboards
+    default: 96e26e80fcd91931
 
 include:
   - resources/*.yml
+  - resources/*/*.yml
 
 sync:
   include:
@@ -35,6 +39,8 @@ targets:
     workspace:
       host: https://dbc-b1b2f91a-d102.cloud.databricks.com
       root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.target}/${bundle.name}
+    run_as:
+      user_name: ${workspace.current_user.userName}
 
   acc:
     mode: production
