@@ -42,7 +42,6 @@ from loguru import logger
 
 from .config import ProjectConfig, VectorSearchConfig
 
-
 # Columns from ``gold_narrative_chunks`` we want the index to carry as
 # filterable / returned metadata. The body column ``content`` is the
 # embedded text and must be listed separately via ``embedding_source_column``.
@@ -70,7 +69,10 @@ EMBEDDING_SOURCE_COLUMN: str = "content"
 # Endpoint
 # ---------------------------------------------------------------------------
 
-def ensure_endpoint(client: Any, endpoint_name: str, endpoint_type: str = "STANDARD") -> None:
+
+def ensure_endpoint(
+    client: Any, endpoint_name: str, endpoint_type: str = "STANDARD"
+) -> None:
     """Create the Vector Search endpoint if it doesn't already exist.
 
     Endpoints are the compute substrate for indexes; a single endpoint
@@ -122,6 +124,7 @@ def _wait_for_endpoint_online(
 # ---------------------------------------------------------------------------
 # Index
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class IndexSpec:
@@ -194,9 +197,7 @@ def wait_for_index_online(
         status = desc.get("status", {}) if isinstance(desc, dict) else {}
         state = status.get("detailed_state") or status.get("ready")
         ready = status.get("ready") is True
-        logger.info(
-            "Index {} state={} ready={}", index_name, state, ready
-        )
+        logger.info("Index {} state={} ready={}", index_name, state, ready)
         if ready:
             return
         time.sleep(poll_s)
@@ -217,6 +218,7 @@ def trigger_sync(client: Any, endpoint_name: str, index_name: str) -> None:
 # ---------------------------------------------------------------------------
 # Query
 # ---------------------------------------------------------------------------
+
 
 def similarity_search(
     client: Any,
@@ -249,8 +251,10 @@ def similarity_search(
     result = resp.get("result", {}) if isinstance(resp, dict) else {}
     data = result.get("data_array", []) or []
     manifest = (
-        resp.get("manifest") if isinstance(resp, dict) else None
-    ) or (result.get("manifest") if isinstance(result, dict) else None) or {}
+        (resp.get("manifest") if isinstance(resp, dict) else None)
+        or (result.get("manifest") if isinstance(result, dict) else None)
+        or {}
+    )
     col_names = [c["name"] for c in manifest.get("columns", [])]
     hits: list[dict] = []
     for row in data:
@@ -262,6 +266,7 @@ def similarity_search(
 # ---------------------------------------------------------------------------
 # Convenience
 # ---------------------------------------------------------------------------
+
 
 def build_default_spec(cfg: ProjectConfig) -> IndexSpec:
     """Produce the canonical spec for the NHTSA narrative-chunk index."""

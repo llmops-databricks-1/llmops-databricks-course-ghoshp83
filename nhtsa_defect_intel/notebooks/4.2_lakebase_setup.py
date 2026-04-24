@@ -60,8 +60,7 @@ env = get_env(spark)
 cfg = load_config("../project_config.yml", env)
 
 assert cfg.lakebase_project_id, (
-    "lakebase_project_id must be set in project_config.yml before running "
-    "this notebook."
+    "lakebase_project_id must be set in project_config.yml before running this notebook."
 )
 
 print(f"env={env} | lakebase_project_id={cfg.lakebase_project_id}")
@@ -113,6 +112,7 @@ except Exception:
 # MAGIC We hand a factory (not an open connection) to `PostgresSessionStore`
 # MAGIC so token rotation is transparent to the agent.
 
+
 # COMMAND ----------
 def _conn_factory() -> psycopg.Connection:
     sp_client_id = os.environ.get("LAKEBASE_SP_CLIENT_ID")
@@ -121,7 +121,9 @@ def _conn_factory() -> psycopg.Connection:
 
     if sp_client_id and sp_client_secret and sp_host:
         w = WorkspaceClient(
-            host=sp_host, client_id=sp_client_id, client_secret=sp_client_secret,
+            host=sp_host,
+            client_id=sp_client_id,
+            client_secret=sp_client_secret,
         )
         username = sp_client_id
     else:
@@ -145,6 +147,7 @@ def _conn_factory() -> psycopg.Connection:
         password=cred.token,
         sslmode="require",
     )
+
 
 # COMMAND ----------
 # MAGIC %md
@@ -205,6 +208,7 @@ print(f"Round-trip OK. sid={sid}")
 # MAGIC ## Clean up the smoke session
 # MAGIC We don't want the smoke-test session polluting ops dashboards.
 # MAGIC Deleting the session row cascades to `agent_turns` via the FK.
+
 
 # COMMAND ----------
 def _cleanup(sid: str) -> None:

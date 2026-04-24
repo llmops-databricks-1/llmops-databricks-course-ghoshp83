@@ -20,14 +20,13 @@ by mocking ``load_context``.
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from nhtsa_curator.agent import AgentResult, NhtsaAgent
+from nhtsa_curator.agent import AgentResult
 from nhtsa_curator.config import ProjectConfig
 from nhtsa_curator.evaluation import (
     OEM_KEYWORDS,
@@ -41,7 +40,6 @@ from nhtsa_curator.serving import (
     _last_user_text,
     _responses_message_event,
 )
-
 
 # ---------------------------------------------------------------------------
 # Feedback scorers
@@ -80,9 +78,7 @@ class TestCiteIdPresent:
 
     def test_handles_responses_envelope(self) -> None:
         envelope = {
-            "output": [
-                {"type": "message", "content": [{"text": "See TSB 10160095."}]}
-            ]
+            "output": [{"type": "message", "content": [{"text": "See TSB 10160095."}]}]
         }
         assert cite_id_present(envelope) is True
 
@@ -255,9 +251,7 @@ def _make_responses_agent_with_fake(fake: _FakeAgent) -> NhtsaResponsesAgent:
     sets the inner ``_agent`` to the fake. Avoids importing the full
     Databricks SDK stack during tests.
     """
-    with patch(
-        "nhtsa_curator.serving.NhtsaAgentModel.load_context", return_value=None
-    ):
+    with patch("nhtsa_curator.serving.NhtsaAgentModel.load_context", return_value=None):
         wrapper = NhtsaResponsesAgent(config_path="project_config.yml", env="dev")
     wrapper._inner._agent = fake  # type: ignore[assignment]
     return wrapper
@@ -283,9 +277,7 @@ def test_responses_agent_predict_returns_text() -> None:
 def test_responses_agent_stream_yields_one_event() -> None:
     fake = _FakeAgent(canned=AgentResult(session_id="", answer="hi.", n_llm_calls=1))
     wrapper = _make_responses_agent_with_fake(fake)
-    events = list(
-        wrapper.predict_stream({"input": [{"role": "user", "content": "hi"}]})
-    )
+    events = list(wrapper.predict_stream({"input": [{"role": "user", "content": "hi"}]}))
     assert len(events) == 1
     assert events[0]["type"] == "response.output_item.done"
 
@@ -390,8 +382,12 @@ def test_log_register_agent_numeric_metrics_only_logged() -> None:
     from nhtsa_curator.agent import log_register_agent
 
     cfg = ProjectConfig(
-        catalog="cat", schema="sch", volume="vol", llm_endpoint="llm-ep",
-        embedding_endpoint="emb-ep", warehouse_id="wh-123",
+        catalog="cat",
+        schema="sch",
+        volume="vol",
+        llm_endpoint="llm-ep",
+        embedding_endpoint="emb-ep",
+        warehouse_id="wh-123",
         vector_search_endpoint="vs-ep",
     )
 
@@ -471,7 +467,9 @@ def test_stamp_trace_deploy_tags_forwards_env(monkeypatch: pytest.MonkeyPatch) -
 
     assert captured["tags"]["git_sha"] == "deadbeef"
     assert captured["tags"]["model_version"] == "12"
-    assert captured["tags"]["model_serving_endpoint_name"] == "nhtsa-agent-endpoint-dev-pg"
+    assert (
+        captured["tags"]["model_serving_endpoint_name"] == "nhtsa-agent-endpoint-dev-pg"
+    )
     assert captured["tags"]["session_id"] == "s-1"
     assert captured["client_request_id"] == "r-1"
 

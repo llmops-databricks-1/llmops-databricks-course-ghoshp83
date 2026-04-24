@@ -54,7 +54,8 @@ write_gold_complaints_fact(spark, cfg)
 write_gold_investigations_fact(spark, cfg)
 
 # COMMAND ----------
-display(spark.sql(f"""
+display(
+    spark.sql(f"""
     SELECT 'dim_vehicle'      AS table, count(*) AS rows FROM {cfg.full_schema_name}.dim_vehicle      UNION ALL
     SELECT 'dim_component',          count(*)         FROM {cfg.full_schema_name}.dim_component      UNION ALL
     SELECT 'dim_oem_group',          count(*)         FROM {cfg.full_schema_name}.dim_oem_group      UNION ALL
@@ -62,4 +63,5 @@ display(spark.sql(f"""
     SELECT 'gold_recalls_fact',      count(*)         FROM {cfg.full_schema_name}.gold_recalls_fact      UNION ALL
     SELECT 'gold_complaints_fact',   count(*)         FROM {cfg.full_schema_name}.gold_complaints_fact   UNION ALL
     SELECT 'gold_investigations_fact', count(*)       FROM {cfg.full_schema_name}.gold_investigations_fact
-"""))
+""")
+)

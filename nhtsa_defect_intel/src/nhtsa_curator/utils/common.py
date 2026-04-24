@@ -20,7 +20,9 @@ def get_widget(name: str, default: str | None = None) -> str | None:
     warning so the caller can treat the path uniformly.
     """
     try:
-        from databricks.sdk.runtime import dbutils  # noqa: PLC0415 — lazy; avoids CI imports
+        from databricks.sdk.runtime import (
+            dbutils,  # noqa: PLC0415 — lazy; avoids CI imports
+        )
     except Exception:  # noqa: BLE001
         return default
     try:

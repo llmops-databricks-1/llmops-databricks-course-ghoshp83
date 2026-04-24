@@ -58,8 +58,7 @@ env = get_env(spark)
 cfg = load_config("../project_config.yml", env)
 
 assert cfg.lakebase_project_id, (
-    "lakebase_project_id must be set in project_config.yml before running "
-    "this notebook."
+    "lakebase_project_id must be set in project_config.yml before running this notebook."
 )
 
 SCOPE = "dev_SPN"
@@ -158,7 +157,7 @@ with psycopg.connect(conn_string) as conn:
         cur.execute(f'GRANT USAGE ON SCHEMA public TO "{spn_client_id}";')
         for tbl in AGENT_TABLES:
             cur.execute(
-                f'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE {tbl} '
+                f"GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE {tbl} "
                 f'TO "{spn_client_id}";'
             )
     conn.commit()
@@ -188,11 +187,12 @@ spn_conn_string = (
     "databricks_postgres?sslmode=require"
 )
 
-with psycopg.connect(spn_conn_string) as conn:
-    with conn.cursor() as cur:
-        cur.execute("SELECT COUNT(*) FROM agent_sessions;")
-        (count,) = cur.fetchone()
+with psycopg.connect(spn_conn_string) as conn, conn.cursor() as cur:
+    cur.execute("SELECT COUNT(*) FROM agent_sessions;")
+    (count,) = cur.fetchone()
 
 print(f"✓ SPN auth + SELECT works. agent_sessions row count: {count}")
-print("   The serving endpoint will now succeed against Lakebase once "
-      "LAKEBASE_SP_* env vars are injected by deploy_agent.py.")
+print(
+    "   The serving endpoint will now succeed against Lakebase once "
+    "LAKEBASE_SP_* env vars are injected by deploy_agent.py."
+)

@@ -50,8 +50,13 @@ def test_paragraph_split_preferred() -> None:
     out = chunk_text(text, chunk_size=400, chunk_overlap=50)
     # Each chunk should end on a paragraph boundary (no half-cut paragraph).
     for c in out[:-1]:  # last chunk may be tail without separator
-        assert c.endswith("x" * 5) or c.endswith("y" * 5) or c.endswith("z" * 5) \
-            or c.endswith("\n\n") or "\n\n" not in c[100:]
+        assert (
+            c.endswith("x" * 5)
+            or c.endswith("y" * 5)
+            or c.endswith("z" * 5)
+            or c.endswith("\n\n")
+            or "\n\n" not in c[100:]
+        )
 
 
 def test_overlap_must_be_less_than_size() -> None:
@@ -64,9 +69,9 @@ def test_overlap_must_be_less_than_size() -> None:
 
 def test_chunk_records_fan_out() -> None:
     recs = [
-        {"id": "a", "body": "x" * 50,  "extra": 1},
+        {"id": "a", "body": "x" * 50, "extra": 1},
         {"id": "b", "body": "y" * 5000, "extra": 2},
-        {"id": "c", "body": "",        "extra": 3},  # dropped (empty)
+        {"id": "c", "body": "", "extra": 3},  # dropped (empty)
     ]
     out = chunk_records(recs, "body", chunk_size=800, chunk_overlap=100, separator="")
 

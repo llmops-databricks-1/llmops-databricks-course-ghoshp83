@@ -16,8 +16,6 @@ hand-rolled ScriptedLLM and InMemorySessionStore.
 
 from __future__ import annotations
 
-import json
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -44,9 +42,8 @@ from nhtsa_curator.evaluation import (
     score_tier2,
     score_tier3,
 )
-from nhtsa_curator.mcp import GENIE_TOOL_NAME, ToolContext
+from nhtsa_curator.mcp import ToolContext
 from nhtsa_curator.memory import InMemorySessionStore
-
 
 # ---------------------------------------------------------------------------
 # TSV loading
@@ -77,8 +74,7 @@ def test_load_tier1_parses_rows(tmp_path: Path) -> None:
 def test_load_tier2_parses_rows(tmp_path: Path) -> None:
     tsv = _write_tsv(
         tmp_path / "t2.tsv",
-        "question\tsource_id\texpected_claim\n"
-        "What?\t23V-085\tThe remedy is X.\n",
+        "question\tsource_id\texpected_claim\nWhat?\t23V-085\tThe remedy is X.\n",
     )
     qs = load_eval_set(TIER_GROUNDED, tsv)
     assert qs[0].source_id == "23V-085"
@@ -88,8 +84,7 @@ def test_load_tier2_parses_rows(tmp_path: Path) -> None:
 def test_load_tier3_parses_rows(tmp_path: Path) -> None:
     tsv = _write_tsv(
         tmp_path / "t3.tsv",
-        "question\treference_answer\n"
-        "Theme?\tSome synthesis answer.\n",
+        "question\treference_answer\nTheme?\tSome synthesis answer.\n",
     )
     qs = load_eval_set(TIER_SYNTHESIS, tsv)
     assert qs[0].reference_answer == "Some synthesis answer."
@@ -103,8 +98,7 @@ def test_load_unknown_tier_raises(tmp_path: Path) -> None:
 def test_load_rejects_wrong_header(tmp_path: Path) -> None:
     tsv = _write_tsv(
         tmp_path / "bad.tsv",
-        "q\trsql\texpected\n"
-        "Q\tSQL\t1\n",
+        "q\trsql\texpected\nQ\tSQL\t1\n",
     )
     with pytest.raises(ValueError, match="expected header"):
         load_eval_set(TIER_DETERMINISTIC, tsv)
@@ -113,8 +107,7 @@ def test_load_rejects_wrong_header(tmp_path: Path) -> None:
 def test_load_rejects_wrong_column_count(tmp_path: Path) -> None:
     tsv = _write_tsv(
         tmp_path / "bad.tsv",
-        "question\treference_sql\texpected_value\n"
-        "only-two-cols\tSELECT 1\n",
+        "question\treference_sql\texpected_value\nonly-two-cols\tSELECT 1\n",
     )
     with pytest.raises(ValueError, match="columns"):
         load_eval_set(TIER_DETERMINISTIC, tsv)
@@ -285,10 +278,18 @@ def test_tier2_no_judge_falls_back_to_citation_only() -> None:
 
 
 def test_tier3_averages_subscores_and_passes_above_threshold() -> None:
-    judge = _FakeJudge([{
-        "faithfulness": 5, "coverage": 4, "calibration": 4,
-        "citation": 4, "conciseness": 4, "notes": "solid synthesis",
-    }])
+    judge = _FakeJudge(
+        [
+            {
+                "faithfulness": 5,
+                "coverage": 4,
+                "calibration": 4,
+                "citation": 4,
+                "conciseness": 4,
+                "notes": "solid synthesis",
+            }
+        ]
+    )
     score, breakdown = score_tier3(
         reference_answer="ref",
         actual_answer="answer",
@@ -301,12 +302,21 @@ def test_tier3_averages_subscores_and_passes_above_threshold() -> None:
 
 
 def test_tier3_fails_below_threshold() -> None:
-    judge = _FakeJudge([{
-        "faithfulness": 2, "coverage": 3, "calibration": 3,
-        "citation": 2, "conciseness": 3,
-    }])
+    judge = _FakeJudge(
+        [
+            {
+                "faithfulness": 2,
+                "coverage": 3,
+                "calibration": 3,
+                "citation": 2,
+                "conciseness": 3,
+            }
+        ]
+    )
     score, breakdown = score_tier3(
-        reference_answer="ref", actual_answer="a", retrieved_context="",
+        reference_answer="ref",
+        actual_answer="a",
+        retrieved_context="",
         judge=judge,
     )
     assert score < TIER3_JUDGE_MIN
@@ -316,7 +326,9 @@ def test_tier3_fails_below_threshold() -> None:
 def test_tier3_falls_back_to_top_level_score_when_subscores_absent() -> None:
     judge = _FakeJudge([{"score": 4.0, "notes": "n/a"}])
     score, breakdown = score_tier3(
-        reference_answer="r", actual_answer="a", retrieved_context="c",
+        reference_answer="r",
+        actual_answer="a",
+        retrieved_context="c",
         judge=judge,
     )
     assert score == 4.0
@@ -326,7 +338,9 @@ def test_tier3_falls_back_to_top_level_score_when_subscores_absent() -> None:
 def test_tier3_requires_judge() -> None:
     with pytest.raises(ValueError, match="judge"):
         score_tier3(
-            reference_answer="r", actual_answer="a", retrieved_context="c",
+            reference_answer="r",
+            actual_answer="a",
+            retrieved_context="c",
             judge=None,
         )
 
@@ -343,7 +357,7 @@ class _FakeToolCall:
     arguments: str
 
     @property
-    def function(self) -> "_FakeToolCall":
+    def function(self) -> _FakeToolCall:
         return self
 
     @property
@@ -392,9 +406,14 @@ class _ScriptedLLM:
 
 def _make_agent(answer: str) -> NhtsaAgent:
     cfg = ProjectConfig(
-        catalog="cat", schema="sch", volume="vol", llm_endpoint="llm",
-        embedding_endpoint="emb", warehouse_id="wh",
-        vector_search_endpoint="ep", genie_space_id="real",
+        catalog="cat",
+        schema="sch",
+        volume="vol",
+        llm_endpoint="llm",
+        embedding_endpoint="emb",
+        warehouse_id="wh",
+        vector_search_endpoint="ep",
+        genie_space_id="real",
     )
     return NhtsaAgent(
         cfg=cfg,
@@ -442,12 +461,22 @@ def test_run_question_tier2_uses_judge() -> None:
 def test_run_question_tier3_uses_judge() -> None:
     agent = _make_agent("Synthesised answer with IDs 23V-085 and 11543210.")
     q = EvalQuestion(
-        tier=TIER_SYNTHESIS, question="themes?", reference_answer="ref",
+        tier=TIER_SYNTHESIS,
+        question="themes?",
+        reference_answer="ref",
     )
-    judge = _FakeJudge([{
-        "faithfulness": 4, "coverage": 4, "calibration": 4,
-        "citation": 4, "conciseness": 4, "notes": "ok",
-    }])
+    judge = _FakeJudge(
+        [
+            {
+                "faithfulness": 4,
+                "coverage": 4,
+                "calibration": 4,
+                "citation": 4,
+                "conciseness": 4,
+                "notes": "ok",
+            }
+        ]
+    )
     result = run_question(agent, q, judge=judge)
     assert result.score == 4.0
     assert result.passed is True
@@ -475,10 +504,20 @@ def test_aggregate_metrics_tier3_tracks_mean_judge_score() -> None:
     q = EvalQuestion(tier=TIER_SYNTHESIS, question="q", reference_answer="r")
     judge = _FakeJudge(
         [
-            {"faithfulness": 5, "coverage": 5, "calibration": 5,
-             "citation": 5, "conciseness": 5},
-            {"faithfulness": 3, "coverage": 3, "calibration": 3,
-             "citation": 3, "conciseness": 3},
+            {
+                "faithfulness": 5,
+                "coverage": 5,
+                "calibration": 5,
+                "citation": 5,
+                "conciseness": 5,
+            },
+            {
+                "faithfulness": 3,
+                "coverage": 3,
+                "calibration": 3,
+                "citation": 3,
+                "conciseness": 3,
+            },
         ]
     )
     results = [run_question(agent, q, judge) for _ in range(2)]

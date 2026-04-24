@@ -11,7 +11,7 @@ import time
 import httpx
 import pytest
 
-from nhtsa_curator.io.http import NhtsaHttpClient, TokenBucket, USER_AGENT
+from nhtsa_curator.io.http import USER_AGENT, NhtsaHttpClient, TokenBucket
 
 
 def test_token_bucket_throttles() -> None:

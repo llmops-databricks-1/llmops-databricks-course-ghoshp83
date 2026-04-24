@@ -29,8 +29,7 @@ from tenacity import (
 )
 
 USER_AGENT = (
-    "nhtsa-defect-intel/0.0.1 "
-    "(LLMOps course project; contact: pralay.ghosh@gmail.com)"
+    "nhtsa-defect-intel/0.0.1 (LLMOps course project; contact: pralay.ghosh@gmail.com)"
 )
 
 # httpx exceptions we want to retry on.

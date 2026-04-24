@@ -29,7 +29,6 @@ from mlflow.models import ModelConfig
 
 from nhtsa_curator.serving import NhtsaResponsesAgent
 
-
 # Development defaults. Overridden by the ``model_config`` dict passed
 # to ``log_model`` so every env (dev/acc/prd) loads the right catalog/
 # schema/endpoint without code edits.

@@ -92,9 +92,10 @@ else:
 # MAGIC ## 4. Smoke query
 
 # COMMAND ----------
+import yaml
+
 from nhtsa_curator.config import VectorSearchConfig
 from nhtsa_curator.vector_search import similarity_search
-import yaml
 
 with open("../project_config.yml") as fh:
     raw = yaml.safe_load(fh)
@@ -107,8 +108,13 @@ hits = similarity_search(
     query_text="sudden unintended acceleration on a Tesla Model 3",
     vs_cfg=vs_cfg,
     columns=[
-        "chunk_id", "source_dataset", "source_id",
-        "make_norm", "model_year", "component_group", "content",
+        "chunk_id",
+        "source_dataset",
+        "source_id",
+        "make_norm",
+        "model_year",
+        "component_group",
+        "content",
     ],
 )
 for h in hits[:5]:

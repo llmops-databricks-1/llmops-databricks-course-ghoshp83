@@ -52,7 +52,6 @@ def chunk_text(
     if chunk_overlap >= chunk_size:
         raise ValueError("chunk_overlap must be < chunk_size")
 
-    stride = chunk_size - chunk_overlap
     chunks: list[str] = []
     i = 0
     n = len(text)

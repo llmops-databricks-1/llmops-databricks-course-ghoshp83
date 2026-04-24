@@ -49,13 +49,12 @@ import statistics
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 import mlflow
 from loguru import logger
 
 from .agent import AgentResult, NhtsaAgent
-
 
 # ---------------------------------------------------------------------------
 # Tier names — exported so callers don't hard-code strings.
@@ -81,15 +80,16 @@ DEFAULT_EVAL_FILES: dict[str, str] = {
 # promotion gate in ``docs/05_evaluation_strategy.md`` is phrased as
 # *relative* to these, so centralising them means a single edit shifts
 # the whole pipeline.
-TIER1_PASS_SCORE = 1.0          # exact match required (or Jaccard ≥ 0.8 for lists)
+TIER1_PASS_SCORE = 1.0  # exact match required (or Jaccard ≥ 0.8 for lists)
 TIER1_LIST_JACCARD_MIN = 0.8
-TIER2_JUDGE_MIN = 4             # 1-5 scale; ≥4 required
-TIER3_JUDGE_MIN = 3.5           # 1-5 mean across 5 sub-scores
+TIER2_JUDGE_MIN = 4  # 1-5 scale; ≥4 required
+TIER3_JUDGE_MIN = 3.5  # 1-5 mean across 5 sub-scores
 
 
 # ---------------------------------------------------------------------------
 # Question + result shapes
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class EvalQuestion:
@@ -102,11 +102,11 @@ class EvalQuestion:
 
     tier: str
     question: str
-    reference_sql: str | None = None         # tier1
-    expected_value: str | None = None        # tier1
-    source_id: str | None = None             # tier2
-    expected_claim: str | None = None        # tier2
-    reference_answer: str | None = None      # tier3
+    reference_sql: str | None = None  # tier1
+    expected_value: str | None = None  # tier1
+    source_id: str | None = None  # tier2
+    expected_claim: str | None = None  # tier2
+    reference_answer: str | None = None  # tier3
 
     @property
     def is_pending(self) -> bool:
@@ -128,12 +128,12 @@ class QuestionResult:
 
     question: EvalQuestion
     agent_result: AgentResult
-    score: float                             # 0.0 .. 1.0 for tier1/2; mean 1-5 for tier3
+    score: float  # 0.0 .. 1.0 for tier1/2; mean 1-5 for tier3
     passed: bool
     metric_breakdown: dict = field(default_factory=dict)
     judge_notes: str | None = None
     latency_s: float = 0.0
-    pending: bool = False                    # truth-value TBD (tier1 only)
+    pending: bool = False  # truth-value TBD (tier1 only)
 
     def to_dict(self) -> dict:
         return {
@@ -157,6 +157,7 @@ class QuestionResult:
 # LLM judge protocol
 # ---------------------------------------------------------------------------
 
+
 class LLMJudge(Protocol):
     """Scoring LLM used by tier-2 and tier-3 scorers.
 
@@ -170,6 +171,7 @@ class LLMJudge(Protocol):
 # ---------------------------------------------------------------------------
 # Loaders
 # ---------------------------------------------------------------------------
+
 
 def load_eval_set(tier: str, path: Path | str) -> list[EvalQuestion]:
     """Parse a TSV eval file into ``EvalQuestion``s.
@@ -254,8 +256,7 @@ def load_all(eval_dir: Path | str) -> dict[str, list[EvalQuestion]]:
     """Convenience loader — returns one list per tier."""
     d = Path(eval_dir)
     return {
-        tier: load_eval_set(tier, d / fname)
-        for tier, fname in DEFAULT_EVAL_FILES.items()
+        tier: load_eval_set(tier, d / fname) for tier, fname in DEFAULT_EVAL_FILES.items()
     }
 
 
@@ -361,9 +362,7 @@ def score_tier2(
     if judge is None:
         return 1.0, {"cite_ok": True, "judge_score": None, "reason": "no judge"}
 
-    judge_out = judge.score(
-        _tier2_judge_prompt(source_id, expected_claim, actual_answer)
-    )
+    judge_out = judge.score(_tier2_judge_prompt(source_id, expected_claim, actual_answer))
     judge_score = _extract_score(judge_out)
     passed = judge_score >= TIER2_JUDGE_MIN
     return (
@@ -447,7 +446,7 @@ def _tier2_judge_prompt(source_id: str, expected_claim: str, actual_answer: str)
         f"Agent answer:\n{actual_answer}\n\n"
         "On a 1-5 scale, how well does the agent's claim about this "
         "source match the expected claim? Return JSON:\n"
-        "  {\"score\": <1-5 int>, \"notes\": \"<one-sentence rationale>\"}"
+        '  {"score": <1-5 int>, "notes": "<one-sentence rationale>"}'
     )
 
 
@@ -469,9 +468,9 @@ def _tier3_judge_prompt(
         f"Agent answer:\n{actual_answer}\n\n"
         "Return JSON:\n"
         "  {\n"
-        "    \"faithfulness\": <1-5>, \"coverage\": <1-5>,\n"
-        "    \"calibration\": <1-5>, \"citation\": <1-5>,\n"
-        "    \"conciseness\": <1-5>, \"notes\": \"<one-sentence rationale>\"\n"
+        '    "faithfulness": <1-5>, "coverage": <1-5>,\n'
+        '    "calibration": <1-5>, "citation": <1-5>,\n'
+        '    "conciseness": <1-5>, "notes": "<one-sentence rationale>"\n'
         "  }"
     )
 
@@ -479,6 +478,7 @@ def _tier3_judge_prompt(
 # ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
+
 
 def run_question(
     agent: NhtsaAgent,
@@ -701,22 +701,28 @@ def _sha256(s: str) -> str:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Run the NHTSA agent eval harness.")
     p.add_argument(
-        "--tier", choices=(*VALID_TIERS, "all"), default="all",
+        "--tier",
+        choices=(*VALID_TIERS, "all"),
+        default="all",
         help="Which tier to run (default: all).",
     )
     p.add_argument(
-        "--target", default="dev",
+        "--target",
+        default="dev",
         help="databricks.yml target (dev/acc/prd). Selects env config.",
     )
     p.add_argument(
-        "--eval-dir", default="notebooks/eval",
+        "--eval-dir",
+        default="notebooks/eval",
         help="Path to the directory holding the eval TSVs.",
     )
     p.add_argument(
-        "--config", default="project_config.yml",
+        "--config",
+        default="project_config.yml",
         help="Path to project_config.yml.",
     )
     p.add_argument(
@@ -728,7 +734,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="MLflow run name. Default: 'eval-<tier>'.",
     )
     p.add_argument(
-        "--no-judge", action="store_true",
+        "--no-judge",
+        action="store_true",
         help="Skip tier-2/3 judging (citation-only for tier-2, fails tier-3).",
     )
     return p.parse_args(argv)
@@ -748,7 +755,9 @@ def _cli_main(argv: list[str] | None = None) -> int:
     system_prompt = load_system_prompt(args.config)
 
     # Build a live agent + judge via the same wiring notebook 5.1 uses.
-    agent, judge = _build_live_agent_and_judge(cfg, system_prompt, use_judge=not args.no_judge)
+    agent, judge = _build_live_agent_and_judge(
+        cfg, system_prompt, use_judge=not args.no_judge
+    )
 
     eval_dir = Path(args.eval_dir)
     tiers = VALID_TIERS if args.tier == "all" else (args.tier,)
@@ -824,6 +833,7 @@ def _build_live_agent_and_judge(
 # Default LLM judge implementation
 # ---------------------------------------------------------------------------
 
+
 class OpenAICompatJudge:
     """Concrete ``LLMJudge`` using the OpenAI-compatible chat API.
 
@@ -883,10 +893,10 @@ class OpenAICompatJudge:
 #   - TSB numbers: TSB 10160095 / TSB-10160095 / 10160095 (8+ digit)
 _CITE_ID_RE = re.compile(
     r"(?:"
-    r"\b\d{2}[VEIT]-?\d{3,}-?\d*\b"      # recall campaign #
+    r"\b\d{2}[VEIT]-?\d{3,}-?\d*\b"  # recall campaign #
     r"|\b(?:PE|EA|DP|RQ|AQ)\d{2}-\d{3}\b"  # investigation #
-    r"|\bTSB[- ]?\d{6,}\b"                 # TSB #
-    r"|\bODI[- ]?\d{6,}\b"                 # ODI complaint #
+    r"|\bTSB[- ]?\d{6,}\b"  # TSB #
+    r"|\bODI[- ]?\d{6,}\b"  # ODI complaint #
     r")",
     re.IGNORECASE,
 )
@@ -895,12 +905,40 @@ _CITE_ID_RE = re.compile(
 # Kept as a constant so the dashboard's "top queried OEMs" chart matches
 # the scorer's label set exactly.
 OEM_KEYWORDS: tuple[str, ...] = (
-    "Tesla", "Ford", "General Motors", "Chevrolet", "GMC", "Cadillac",
-    "Toyota", "Lexus", "Honda", "Acura", "Nissan", "Infiniti",
-    "Hyundai", "Kia", "Genesis", "BMW", "Mercedes-Benz", "Audi",
-    "Volkswagen", "Porsche", "Stellantis", "Jeep", "Ram", "Dodge",
-    "Chrysler", "Subaru", "Mazda", "Volvo", "Rivian", "Lucid",
-    "Polestar", "Cruise", "Waymo", "Zoox",
+    "Tesla",
+    "Ford",
+    "General Motors",
+    "Chevrolet",
+    "GMC",
+    "Cadillac",
+    "Toyota",
+    "Lexus",
+    "Honda",
+    "Acura",
+    "Nissan",
+    "Infiniti",
+    "Hyundai",
+    "Kia",
+    "Genesis",
+    "BMW",
+    "Mercedes-Benz",
+    "Audi",
+    "Volkswagen",
+    "Porsche",
+    "Stellantis",
+    "Jeep",
+    "Ram",
+    "Dodge",
+    "Chrysler",
+    "Subaru",
+    "Mazda",
+    "Volvo",
+    "Rivian",
+    "Lucid",
+    "Polestar",
+    "Cruise",
+    "Waymo",
+    "Zoox",
 )
 
 
@@ -1048,13 +1086,13 @@ def evaluate_agent(
     Databricks-hosted judge endpoint — fine in the scheduled workflow
     but a bad default for CI / unit tests.
     """
+    from databricks.sdk import WorkspaceClient  # noqa: PLC0415
+    from databricks.vector_search.client import VectorSearchClient  # noqa: PLC0415
+
     from .agent import NhtsaAgent  # noqa: PLC0415 — avoid self-import
     from .config import VectorSearchConfig, load_system_prompt  # noqa: PLC0415
     from .mcp import ToolContext, _normalise_statement_result  # noqa: PLC0415
     from .memory import InMemorySessionStore  # noqa: PLC0415
-
-    from databricks.sdk import WorkspaceClient  # noqa: PLC0415
-    from databricks.vector_search.client import VectorSearchClient  # noqa: PLC0415
 
     ws = WorkspaceClient()
     vs_client = VectorSearchClient(disable_notice=True)

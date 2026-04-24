@@ -30,7 +30,6 @@ from loguru import logger
 
 from .config import ProjectConfig
 
-
 # Tables exposed to Genie. Order matters only for human readability;
 # Genie discovers the join graph from FK columns.
 GENIE_TABLES: tuple[str, ...] = (
@@ -95,26 +94,54 @@ COLUMN_COMMENTS: dict[tuple[str, str], str] = {
     ("dim_vehicle", "model_norm"): "Model name (canonical, title-cased).",
     ("dim_vehicle", "model_year"): "4-digit model year as integer.",
     ("dim_component", "component_group"): "Top-level NHTSA component category.",
-    ("dim_component", "component_leaf"): "Most-specific subsystem in the NHTSA hierarchy.",
-    ("dim_oem_group", "oem_group"): "Corporate parent (e.g. 'General Motors', 'Stellantis', 'Tesla').",
-    ("gold_recalls_fact", "recall_type_code"): "NHTSA recall type — 'V'=vehicle, 'E'=equipment, 'T'=tire, 'C'=child seat.",
-    ("gold_recalls_fact", "fmvss"): "Federal Motor Vehicle Safety Standard number, if the recall references one.",
-    ("gold_recalls_fact", "units_affected"): "Number of vehicles/units in this campaign row.",
+    (
+        "dim_component",
+        "component_leaf",
+    ): "Most-specific subsystem in the NHTSA hierarchy.",
+    (
+        "dim_oem_group",
+        "oem_group",
+    ): "Corporate parent (e.g. 'General Motors', 'Stellantis', 'Tesla').",
+    (
+        "gold_recalls_fact",
+        "recall_type_code",
+    ): "NHTSA recall type — 'V'=vehicle, 'E'=equipment, 'T'=tire, 'C'=child seat.",
+    (
+        "gold_recalls_fact",
+        "fmvss",
+    ): "Federal Motor Vehicle Safety Standard number, if the recall references one.",
+    (
+        "gold_recalls_fact",
+        "units_affected",
+    ): "Number of vehicles/units in this campaign row.",
     ("gold_complaints_fact", "crash"): "1 if the consumer reported a crash, else 0.",
     ("gold_complaints_fact", "fire"): "1 if the consumer reported a fire, else 0.",
     ("gold_complaints_fact", "injured"): "Integer count of injured persons reported.",
     ("gold_complaints_fact", "deaths"): "Integer count of fatalities reported.",
     ("gold_complaints_fact", "miles"): "Vehicle mileage at incident, if reported.",
-    ("gold_complaints_fact", "complaint_source"): "Channel: 'OWNR' (owner-submitted) | 'MFR' (mfr-forwarded).",
-    ("gold_investigations_fact", "investigation_type"): "PE (Preliminary Evaluation), EA (Engineering Analysis), DP (Defect Petition), RQ (Recall Query), TT (Trend), AQ (Audit Query).",
+    (
+        "gold_complaints_fact",
+        "complaint_source",
+    ): "Channel: 'OWNR' (owner-submitted) | 'MFR' (mfr-forwarded).",
+    (
+        "gold_investigations_fact",
+        "investigation_type",
+    ): (
+        "PE (Preliminary Evaluation), EA (Engineering Analysis), "
+        "DP (Defect Petition), RQ (Recall Query), TT (Trend), AQ (Audit Query)."
+    ),
     ("gold_investigations_fact", "status"): "'open' or 'closed'.",
-    ("gold_investigations_fact", "days_open"): "Calendar days the investigation has been open (or was open, if closed).",
+    (
+        "gold_investigations_fact",
+        "days_open",
+    ): "Calendar days the investigation has been open (or was open, if closed).",
 }
 
 
 # ---------------------------------------------------------------------------
 # Trusted asset seeds
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class TrustedQuery:
@@ -149,7 +176,10 @@ def default_trusted_queries(cfg: ProjectConfig) -> list[TrustedQuery]:
         ),
         TrustedQuery(
             name="complaints_with_fire_by_oem_group",
-            question="Which OEM groups had the most fire-related complaints in the last 3 years?",
+            question=(
+                "Which OEM groups had the most fire-related complaints "
+                "in the last 3 years?"
+            ),
             sql=f"""
                 SELECT g.oem_group, COUNT(*) AS n_fire_complaints
                 FROM {fq}.gold_complaints_fact f
@@ -175,7 +205,10 @@ def default_trusted_queries(cfg: ProjectConfig) -> list[TrustedQuery]:
         ),
         TrustedQuery(
             name="injuries_per_make_per_year",
-            question="Total reported injuries from complaints, by make, by year — last 5 years.",
+            question=(
+                "Total reported injuries from complaints, by make, by year "
+                "— last 5 years."
+            ),
             sql=f"""
                 SELECT v.make_norm, YEAR(f.event_date) AS yr,
                        SUM(f.injured) AS injuries
@@ -204,6 +237,7 @@ def default_trusted_queries(cfg: ProjectConfig) -> list[TrustedQuery]:
 # ---------------------------------------------------------------------------
 # DDL emitters
 # ---------------------------------------------------------------------------
+
 
 def emit_table_comment_ddl(cfg: ProjectConfig) -> list[str]:
     """Emit ``COMMENT ON TABLE`` statements for every Genie-exposed table.
@@ -257,6 +291,7 @@ def apply_comments(spark: Any, cfg: ProjectConfig) -> int:
 # Verification
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class GenieSpaceVerification:
     """Summary returned by :func:`verify_genie_space`."""
@@ -290,6 +325,9 @@ def verify_genie_space(spark: Any, cfg: ProjectConfig) -> GenieSpaceVerification
         tables_expected=list(GENIE_TABLES),
         tables_present=present,
         tables_missing=missing,
-        ok=(not missing and space_id != "<not-set>"
-            and not space_id.startswith("PLACEHOLDER")),
+        ok=(
+            not missing
+            and space_id != "<not-set>"
+            and not space_id.startswith("PLACEHOLDER")
+        ),
     )

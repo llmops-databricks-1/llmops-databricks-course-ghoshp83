@@ -15,12 +15,11 @@
 # MAGIC sync in Phase 3.
 
 # COMMAND ----------
+import yaml
 from pyspark.sql import SparkSession
 
 from nhtsa_curator.config import ChunkingConfig, get_env, load_config
 from nhtsa_curator.gold import write_gold_narrative_chunks
-
-import yaml
 
 # COMMAND ----------
 spark = SparkSession.builder.getOrCreate()
@@ -61,16 +60,20 @@ write_gold_narrative_chunks(
 )
 
 # COMMAND ----------
-display(spark.sql(f"""
+display(
+    spark.sql(f"""
     SELECT source_dataset, count(*) AS chunks
     FROM {cfg.full_schema_name}.gold_narrative_chunks
     GROUP BY source_dataset
     ORDER BY chunks DESC
-"""))
+""")
+)
 
-display(spark.sql(f"""
+display(
+    spark.sql(f"""
     SELECT chunk_id, source_dataset, source_id, chunk_idx,
            substring(content, 1, 240) AS preview
     FROM {cfg.full_schema_name}.gold_narrative_chunks
     LIMIT 10
-"""))
+""")
+)

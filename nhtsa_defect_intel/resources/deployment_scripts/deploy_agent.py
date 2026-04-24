@@ -53,6 +53,7 @@ logger.info(f"  Env     : {env}")
 # MAGIC crashes on `config.auto_capture_config` when it tries the update
 # MAGIC path. Deleting the endpoint first forces the clean create path.
 
+
 # COMMAND ----------
 def _delete_if_broken(endpoint: str) -> None:
     w = WorkspaceClient()

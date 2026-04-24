@@ -17,35 +17,35 @@ def _tsv(fields: list[str]) -> str:
 
 def test_parse_recalls_row_basic() -> None:
     fields = [
-        "1",            # record_id
-        "24V001000",    # campno
-        "TESLA",        # maketxt
-        "MODEL Y",      # modeltxt
-        "2023",         # yeartxt
-        "SB-24-99",     # mfgcampno
-        "BATTERY",      # compname
+        "1",  # record_id
+        "24V001000",  # campno
+        "TESLA",  # maketxt
+        "MODEL Y",  # modeltxt
+        "2023",  # yeartxt
+        "SB-24-99",  # mfgcampno
+        "BATTERY",  # compname
         "TESLA, INC.",  # mfgname
-        "20221001",     # bgman
-        "20230301",     # endman
-        "V",            # rcltypecd
-        "150000",       # potaff
-        "20240115",     # odate
-        "MFR",          # influenced_by
-        "TESLA",        # mfgtxt
-        "20240120",     # rcdate
-        "20240125",     # datea
-        "",             # rpno
-        "FMVSS-301",    # fmvss
-        "Battery defect description",   # desc_defect
-        "Risk of fire",                 # conequence_defect
-        "Software update",              # corrective_action
-        "",             # notes
-        "",             # rcl_cmpt_id
-        "",             # mfr_comp_name
-        "",             # mfr_comp_desc
-        "",             # mfr_comp_ptno
-        "N",            # do_not_drive (May 2025)
-        "N",            # park_outside (May 2025)
+        "20221001",  # bgman
+        "20230301",  # endman
+        "V",  # rcltypecd
+        "150000",  # potaff
+        "20240115",  # odate
+        "MFR",  # influenced_by
+        "TESLA",  # mfgtxt
+        "20240120",  # rcdate
+        "20240125",  # datea
+        "",  # rpno
+        "FMVSS-301",  # fmvss
+        "Battery defect description",  # desc_defect
+        "Risk of fire",  # conequence_defect
+        "Software update",  # corrective_action
+        "",  # notes
+        "",  # rcl_cmpt_id
+        "",  # mfr_comp_name
+        "",  # mfr_comp_desc
+        "",  # mfr_comp_ptno
+        "N",  # do_not_drive (May 2025)
+        "N",  # park_outside (May 2025)
     ]
     rows = list(parse_flat_file(_tsv(fields), RECALLS_COLUMNS))
     assert len(rows) == 1
@@ -58,9 +58,11 @@ def test_parse_recalls_row_basic() -> None:
 
 
 def test_parse_complaints_skips_empty_lines() -> None:
-    payload = "\n\n" + _tsv(
-        ["1", "12345", "FORD"] + [""] * (len(COMPLAINTS_COLUMNS) - 3)
-    ) + "\n\n"
+    payload = (
+        "\n\n"
+        + _tsv(["1", "12345", "FORD"] + [""] * (len(COMPLAINTS_COLUMNS) - 3))
+        + "\n\n"
+    )
     rows = list(parse_flat_file(payload, COMPLAINTS_COLUMNS))
     assert len(rows) == 1
     assert rows[0]["odino"] == "12345"

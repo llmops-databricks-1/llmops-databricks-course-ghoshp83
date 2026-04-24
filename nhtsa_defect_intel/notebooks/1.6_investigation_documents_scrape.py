@@ -94,7 +94,8 @@ with open_client() as client:
 logger.info(f"Investigation docs scrape complete; rows merged: {n:,}")
 
 # COMMAND ----------
-display(spark.sql(f"""
+display(
+    spark.sql(f"""
     SELECT
         substring(nhtsa_action_number, 1, 2) AS investigation_type,
         count(DISTINCT nhtsa_action_number)  AS investigations_with_docs,
@@ -102,4 +103,5 @@ display(spark.sql(f"""
     FROM {docs_table}
     GROUP BY substring(nhtsa_action_number, 1, 2)
     ORDER BY documents DESC
-"""))
+""")
+)

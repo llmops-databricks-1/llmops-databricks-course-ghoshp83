@@ -57,11 +57,11 @@ line-length = 90
 
 [tool.ruff.lint]
 select = ["F", "E", "W", "B", "I", "UP", "SIM", "ERA", "C", "ANN"]
-ignore = ["D107", "D203", "D213", "C901", "ERA001", "ANN204"]
+ignore = ["D107", "D203", "D213", "C901", "ERA001", "ANN204", "ANN401"]
 
 [tool.ruff.lint.per-file-ignores]
-"notebooks/*.py" = ["E501", "E402", "ANN201", "F821"]
-"tests/*.py" = ["ANN201"]
+"notebooks/*.py" = ["E501", "E402", "ANN201", "ANN202", "F821"]
+"tests/*.py" = ["ANN201", "ANN202"]
 
 [tool.ruff.format]
 indent-style = "space"

@@ -47,19 +47,19 @@ from loguru import logger
 from .config import ProjectConfig, load_system_prompt
 from .mcp import (
     ALL_TOOL_NAMES,
+    VECTOR_SEARCH_TOOL_NAME,
+    ToolContext,
     execute_tool,
     merge_filters,
     serialise_tool_result,
     tool_specs,
-    ToolContext,
-    VECTOR_SEARCH_TOOL_NAME,
 )
 from .memory import SessionStore, Turn
-
 
 # ---------------------------------------------------------------------------
 # LLM client Protocol — so tests can inject a fake without importing openai.
 # ---------------------------------------------------------------------------
+
 
 class _ChatCompletions(Protocol):
     def create(self, **kwargs: Any) -> Any: ...
@@ -78,6 +78,7 @@ class LLMClient(Protocol):
 # ---------------------------------------------------------------------------
 # Result type — stable shape for the notebook, eval harness, and serving.
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class AgentResult:
@@ -104,6 +105,7 @@ class AgentResult:
 # ---------------------------------------------------------------------------
 # Agent
 # ---------------------------------------------------------------------------
+
 
 class NhtsaAgent:
     """Tool-calling agent around the four NHTSA tools.
@@ -377,6 +379,7 @@ class NhtsaAgent:
 # tracing is enabled at the call site.
 # ---------------------------------------------------------------------------
 
+
 def _tag_current_trace(**tags: Any) -> None:
     """Attach k/v tags to the active trace; no-op when tracing is off.
 
@@ -399,6 +402,7 @@ def _tag_current_trace(**tags: Any) -> None:
 # Response-shape helpers — tolerant of both openai SDK objects and plain
 # dicts (fakes in tests).
 # ---------------------------------------------------------------------------
+
 
 def _first_choice(resp: Any) -> Any:
     choices = getattr(resp, "choices", None) or resp["choices"]
@@ -595,8 +599,8 @@ def log_register_agent(
         DatabricksTable(table_name=f"{full_schema}.gold_complaints_fact"),
         DatabricksTable(table_name=f"{full_schema}.gold_investigations_fact"),
         # TBD for the below tables
-        #DatabricksTable(table_name=f"{full_schema}.gold_tsb_meta"),
-        #DatabricksTable(table_name=f"{full_schema}.gold_sgo_av_crashes"),
+        # DatabricksTable(table_name=f"{full_schema}.gold_tsb_meta"),
+        # DatabricksTable(table_name=f"{full_schema}.gold_sgo_av_crashes"),
         DatabricksTable(table_name=f"{full_schema}.gold_narrative_chunks"),
     ]
     if cfg.genie_space_id and not cfg.genie_space_id.startswith("PLACEHOLDER"):

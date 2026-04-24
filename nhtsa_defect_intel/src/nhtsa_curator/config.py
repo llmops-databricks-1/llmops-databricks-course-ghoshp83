@@ -30,9 +30,7 @@ class NhtsaSourcesConfig(BaseModel):
     complaints_api: str = Field(..., description="Complaints REST API base")
     recalls_bulk_csv: str = Field(..., description="Flat-file recalls dump")
     complaints_bulk_csv: str = Field(..., description="Flat-file complaints dump")
-    investigations_bulk_csv: str = Field(
-        ..., description="Flat-file investigations dump"
-    )
+    investigations_bulk_csv: str = Field(..., description="Flat-file investigations dump")
     tsbs_bulk_csv: list[str] = Field(
         ...,
         description=(
@@ -56,9 +54,8 @@ class NhtsaSourcesConfig(BaseModel):
     @classmethod
     def _coerce_str_to_list(cls, v: object) -> object:
         return [v] if isinstance(v, str) else v
-    ingestion_cadence_days: int = Field(
-        1, description="How often the ingestion job runs"
-    )
+
+    ingestion_cadence_days: int = Field(1, description="How often the ingestion job runs")
 
 
 class ProjectConfig(BaseModel):
@@ -70,15 +67,11 @@ class ProjectConfig(BaseModel):
     llm_endpoint: str = Field(..., description="LLM serving endpoint name")
     embedding_endpoint: str = Field(..., description="Embedding endpoint name")
     warehouse_id: str = Field(..., description="SQL Warehouse ID")
-    vector_search_endpoint: str = Field(
-        ..., description="Vector search endpoint name"
-    )
+    vector_search_endpoint: str = Field(..., description="Vector search endpoint name")
     genie_space_id: str | None = Field(
         None, description="Genie space ID (set after Phase 3)"
     )
-    usage_policy_id: str | None = Field(
-        None, description="AI Gateway usage policy id"
-    )
+    usage_policy_id: str | None = Field(None, description="AI Gateway usage policy id")
     lakebase_project_id: str | None = Field(
         None, description="Lakebase project id (set in Phase 4)"
     )

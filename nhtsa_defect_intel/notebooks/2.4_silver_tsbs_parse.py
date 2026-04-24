@@ -30,7 +30,9 @@ cfg = load_config("../project_config.yml", env)
 write_silver_tsbs(spark, cfg, taxonomy_path="../src/nhtsa_curator/ref/oem_groups.yml")
 
 # COMMAND ----------
-display(spark.sql(f"""
+display(
+    spark.sql(f"""
     SELECT count(*) AS index_rows
     FROM {cfg.full_schema_name}.silver_tsbs
-"""))
+""")
+)

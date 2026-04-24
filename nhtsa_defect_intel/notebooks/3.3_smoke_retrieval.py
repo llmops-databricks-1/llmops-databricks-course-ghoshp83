@@ -65,9 +65,10 @@ SMOKE_QUERIES = [
     {
         "q": "airbag deployment failure during low-speed crash",
         "filters": {},
-        "must_match": lambda h: (h.get("component_group") or "").lower().startswith(
-            "air bag"
-        ) or "airbag" in (h.get("content") or "").lower(),
+        "must_match": lambda h: (
+            (h.get("component_group") or "").lower().startswith("air bag")
+            or "airbag" in (h.get("content") or "").lower()
+        ),
     },
     {
         "q": "engine fire while parked",
@@ -102,8 +103,10 @@ SMOKE_QUERIES = [
     {
         "q": "Takata airbag rupture metal fragments",
         "filters": {},
-        "must_match": lambda h: "takata" in (h.get("content") or "").lower()
-        or "airbag" in (h.get("content") or "").lower(),
+        "must_match": lambda h: (
+            "takata" in (h.get("content") or "").lower()
+            or "airbag" in (h.get("content") or "").lower()
+        ),
     },
     {
         "q": "battery thermal runaway in EV after charging",

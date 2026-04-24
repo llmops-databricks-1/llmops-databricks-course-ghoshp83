@@ -32,7 +32,8 @@ n = write_silver_recalls(
 )
 
 # COMMAND ----------
-display(spark.sql(f"""
+display(
+    spark.sql(f"""
     SELECT
         count(*)                            AS rows,
         count(DISTINCT campaign_number)     AS campaigns,
@@ -41,4 +42,5 @@ display(spark.sql(f"""
         min(record_creation_date)           AS earliest,
         max(record_creation_date)           AS latest
     FROM {cfg.full_schema_name}.silver_recalls
-"""))
+""")
+)

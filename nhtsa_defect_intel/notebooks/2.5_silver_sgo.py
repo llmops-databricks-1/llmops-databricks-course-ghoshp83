@@ -43,9 +43,11 @@ write_silver_sgo(
 )
 
 # COMMAND ----------
-display(spark.sql(f"""
+display(
+    spark.sql(f"""
     SELECT sae_level, count(*) AS crashes
     FROM {cfg.full_schema_name}.silver_sgo_crashes
     GROUP BY sae_level
     ORDER BY sae_level
-"""))
+""")
+)

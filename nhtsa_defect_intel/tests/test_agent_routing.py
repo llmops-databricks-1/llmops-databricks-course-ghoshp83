@@ -32,7 +32,6 @@ from nhtsa_curator.mcp import (
 )
 from nhtsa_curator.memory import InMemorySessionStore
 
-
 # ---------------------------------------------------------------------------
 # ScriptedLLM — tiny fake of openai.OpenAI.chat.completions.create
 # ---------------------------------------------------------------------------
@@ -45,7 +44,7 @@ class _FakeToolCall:
     arguments: str  # JSON-encoded
 
     @property
-    def function(self) -> "_FakeToolCall":
+    def function(self) -> _FakeToolCall:
         # The openai SDK wraps name+arguments in .function; we mimic that.
         return self
 
@@ -108,8 +107,13 @@ def _tool_call(tc_id: str, name: str, args: dict) -> _FakeToolCall:
 
 def _make_cfg() -> ProjectConfig:
     return ProjectConfig(
-        catalog="cat", schema="sch", volume="vol", llm_endpoint="llm",
-        embedding_endpoint="emb", warehouse_id="wh", vector_search_endpoint="ep",
+        catalog="cat",
+        schema="sch",
+        volume="vol",
+        llm_endpoint="llm",
+        embedding_endpoint="emb",
+        warehouse_id="wh",
+        vector_search_endpoint="ep",
         genie_space_id="real-space",
     )
 
@@ -204,7 +208,8 @@ def test_multiple_parallel_tool_calls_single_step(ctx: ToolContext) -> None:
             tool_calls=[
                 _tool_call("1", GENIE_TOOL_NAME, {"question": "counts"}),
                 _tool_call(
-                    "2", VECTOR_SEARCH_TOOL_NAME,
+                    "2",
+                    VECTOR_SEARCH_TOOL_NAME,
                     {"query": "fire", "filters": {"make_norm": "Tesla"}},
                 ),
             ]
@@ -222,13 +227,9 @@ def test_multiple_parallel_tool_calls_single_step(ctx: ToolContext) -> None:
 def test_serial_tool_loop(ctx: ToolContext) -> None:
     """Two separate tool steps, then a final answer."""
     script = [
+        _FakeMessage(tool_calls=[_tool_call("1", GENIE_TOOL_NAME, {"question": "q1"})]),
         _FakeMessage(
-            tool_calls=[_tool_call("1", GENIE_TOOL_NAME, {"question": "q1"})]
-        ),
-        _FakeMessage(
-            tool_calls=[
-                _tool_call("2", VECTOR_SEARCH_TOOL_NAME, {"query": "fire"})
-            ]
+            tool_calls=[_tool_call("2", VECTOR_SEARCH_TOOL_NAME, {"query": "fire"})]
         ),
         _FakeMessage(content="final"),
     ]
@@ -298,9 +299,7 @@ def test_system_prompt_injected_first(ctx: ToolContext) -> None:
 
 def test_tools_passed_to_every_llm_call(ctx: ToolContext) -> None:
     script = [
-        _FakeMessage(
-            tool_calls=[_tool_call("1", GENIE_TOOL_NAME, {"question": "q"})]
-        ),
+        _FakeMessage(tool_calls=[_tool_call("1", GENIE_TOOL_NAME, {"question": "q"})]),
         _FakeMessage(content="done"),
     ]
     agent, _ = _agent(script, ctx)
@@ -321,8 +320,11 @@ def test_filters_accumulate_across_turns(ctx: ToolContext) -> None:
     script1 = [
         _FakeMessage(
             tool_calls=[
-                _tool_call("1", VECTOR_SEARCH_TOOL_NAME,
-                           {"query": "fire", "filters": {"make_norm": "Tesla"}})
+                _tool_call(
+                    "1",
+                    VECTOR_SEARCH_TOOL_NAME,
+                    {"query": "fire", "filters": {"make_norm": "Tesla"}},
+                )
             ]
         ),
         _FakeMessage(content="Fires on Teslas."),
@@ -375,9 +377,7 @@ def test_tool_turns_not_replayed(ctx: ToolContext) -> None:
     """Prior tool-call rounds aren't re-sent — they'd lack matching IDs."""
     # Turn 1: one tool call.
     turn1 = [
-        _FakeMessage(
-            tool_calls=[_tool_call("1", GENIE_TOOL_NAME, {"question": "q"})]
-        ),
+        _FakeMessage(tool_calls=[_tool_call("1", GENIE_TOOL_NAME, {"question": "q"})]),
         _FakeMessage(content="done1"),
     ]
     store = InMemorySessionStore()

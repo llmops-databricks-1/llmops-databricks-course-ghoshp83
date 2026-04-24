@@ -31,21 +31,23 @@ from pyspark.sql import types as T
 
 from .config import ProjectConfig
 
-
-_TRACKER_SCHEMA = T.StructType([
-    T.StructField("doc_id", T.StringType(), False),
-    T.StructField("volume_path", T.StringType(), False),
-    T.StructField("parsed_at", T.TimestampType(), False),
-    T.StructField("parser_version", T.StringType(), True),
-    T.StructField("parse_status", T.StringType(), False),  # ok | error
-    T.StructField("error_message", T.StringType(), True),
-])
+_TRACKER_SCHEMA = T.StructType(
+    [
+        T.StructField("doc_id", T.StringType(), False),
+        T.StructField("volume_path", T.StringType(), False),
+        T.StructField("parsed_at", T.TimestampType(), False),
+        T.StructField("parser_version", T.StringType(), True),
+        T.StructField("parse_status", T.StringType(), False),  # ok | error
+        T.StructField("error_message", T.StringType(), True),
+    ]
+)
 
 
 def _ensure_tracker(spark: SparkSession, table: str) -> None:
     if not spark.catalog.tableExists(table):
-        spark.createDataFrame([], _TRACKER_SCHEMA) \
-            .write.format("delta").saveAsTable(table)
+        spark.createDataFrame([], _TRACKER_SCHEMA).write.format("delta").saveAsTable(
+            table
+        )
         logger.info(f"Created parse tracker {table}")
 
 
@@ -98,7 +100,12 @@ def parse_documents(
     _ensure_tracker(spark, tracker_table)
 
     todo = _unparsed_paths(
-        spark, docs_table, tracker_table, doc_id_col, path_col, max_docs_per_run,
+        spark,
+        docs_table,
+        tracker_table,
+        doc_id_col,
+        path_col,
+        max_docs_per_run,
     )
     n_todo = todo.count()
     logger.info(f"[{dataset}] {n_todo} docs queued for ai_parse_document")
@@ -114,7 +121,9 @@ def parse_documents(
             SELECT
                 t.doc_id,
                 t.volume_path,
-                ai_parse_document(read_files(t.volume_path, format => 'binaryFile').content) AS parsed
+                ai_parse_document(
+                    read_files(t.volume_path, format => 'binaryFile').content
+                ) AS parsed
             FROM _{dataset}_todo t
         )
         SELECT
@@ -132,9 +141,9 @@ def parse_documents(
     if not spark.catalog.tableExists(parsed_table):
         # Materialise schema from the first batch so we don't have to
         # hand-maintain the ai_parse_document return shape.
-        parsed.limit(0).write.format("delta") \
-            .option("delta.enableChangeDataFeed", "true") \
-            .saveAsTable(parsed_table)
+        parsed.limit(0).write.format("delta").option(
+            "delta.enableChangeDataFeed", "true"
+        ).saveAsTable(parsed_table)
         logger.info(f"Created {parsed_table}")
 
     # We can't easily distinguish per-row failure inside ai_parse_document
@@ -161,6 +170,7 @@ def parse_documents(
 # ---------------------------------------------------------------------------
 # Convenience wrappers per dataset — keeps notebook code uncluttered.
 # ---------------------------------------------------------------------------
+
 
 def parse_tsb_documents(
     spark: SparkSession,

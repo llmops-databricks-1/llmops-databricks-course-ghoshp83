@@ -33,10 +33,10 @@ from pyspark.sql import SparkSession
 
 from nhtsa_curator.config import load_config
 from nhtsa_curator.evaluation import (
+    _build_mlflow_guidelines,
     cite_id_present,
     mentions_oem,
     word_count_under,
-    _build_mlflow_guidelines,
 )
 from nhtsa_curator.utils.common import get_widget, set_mlflow_tracking_uri
 
@@ -108,9 +108,7 @@ else:
     eval_pdf = pd.DataFrame(
         {
             "trace_id": traces_pdf["trace_id"],
-            "inputs": traces_pdf["request_preview"].apply(
-                lambda x: {"query": x}
-            ),
+            "inputs": traces_pdf["request_preview"].apply(lambda x: {"query": x}),
             "outputs": traces_pdf["response_text"],
         }
     )

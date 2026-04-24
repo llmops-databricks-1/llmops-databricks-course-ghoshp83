@@ -22,9 +22,9 @@ import pytest
 
 from nhtsa_curator.memory import (
     DDL_STATEMENTS,
+    VALID_ROLES,
     InMemorySessionStore,
     Turn,
-    VALID_ROLES,
 )
 
 
@@ -63,9 +63,7 @@ def test_append_turn_rejects_duplicate_idx(store: InMemorySessionStore) -> None:
     sid = store.create_session()
     store.append_turn(Turn(session_id=sid, turn_idx=0, role="user", content="a"))
     with pytest.raises(ValueError, match="turn_idx 0"):
-        store.append_turn(
-            Turn(session_id=sid, turn_idx=0, role="assistant", content="b")
-        )
+        store.append_turn(Turn(session_id=sid, turn_idx=0, role="assistant", content="b"))
 
 
 def test_append_turn_rejects_unknown_session(store: InMemorySessionStore) -> None:
@@ -107,9 +105,7 @@ def test_history_ordered_ascending_regardless_of_insert_order(
 def test_history_window_returns_last_k(store: InMemorySessionStore) -> None:
     sid = store.create_session()
     for i in range(5):
-        store.append_turn(
-            Turn(session_id=sid, turn_idx=i, role="user", content=str(i))
-        )
+        store.append_turn(Turn(session_id=sid, turn_idx=i, role="user", content=str(i)))
     hist = store.get_history(sid, max_turns=2)
     assert [t.content for t in hist] == ["3", "4"]
 

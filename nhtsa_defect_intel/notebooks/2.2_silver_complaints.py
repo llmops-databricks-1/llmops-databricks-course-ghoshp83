@@ -38,7 +38,8 @@ n = write_silver_complaints(
 )
 
 # COMMAND ----------
-display(spark.sql(f"""
+display(
+    spark.sql(f"""
     SELECT
         count(*)                                     AS rows,
         count(DISTINCT make_norm)                    AS makes,
@@ -48,7 +49,8 @@ display(spark.sql(f"""
         sum(deaths)                                  AS total_deaths,
         avg(narrative_len_orig)                      AS avg_narrative_len
     FROM {cfg.full_schema_name}.silver_complaints
-"""))
+""")
+)
 
 # COMMAND ----------
 # MAGIC %md
@@ -57,9 +59,11 @@ display(spark.sql(f"""
 # MAGIC obvious patterns. If you see a raw VIN or phone make it past,
 # MAGIC tighten the regex in `nhtsa_curator/pii.py`.
 
-display(spark.sql(f"""
+display(
+    spark.sql(f"""
     SELECT odi_number, substring(narrative_clean, 1, 400) AS preview
     FROM {cfg.full_schema_name}.silver_complaints
     WHERE narrative_clean RLIKE '\\\\[(VIN|PHONE|EMAIL|NUM)\\\\]'
     LIMIT 10
-"""))
+""")
+)

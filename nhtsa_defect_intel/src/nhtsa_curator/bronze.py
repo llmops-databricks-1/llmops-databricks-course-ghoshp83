@@ -17,14 +17,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from itertools import islice
 from typing import TYPE_CHECKING
 
 from loguru import logger
 from pyspark.sql import SparkSession
 from pyspark.sql import types as T
-from pyspark.sql.functions import lit
 
 from .config import ProjectConfig
 
@@ -57,8 +56,7 @@ def _create_table_if_missing(
     if not spark.catalog.tableExists(table_name):
         empty = spark.createDataFrame([], schema)
         (
-            empty.write
-            .format("delta")
+            empty.write.format("delta")
             .option("delta.enableChangeDataFeed", "true")
             .saveAsTable(table_name)
         )
@@ -121,6 +119,7 @@ def _merge_on_key(
 # Schemas
 # ---------------------------------------------------------------------------
 
+
 def _schema_for(columns: list[str]) -> T.StructType:
     """All NHTSA flat-file fields land as STRING in bronze; typing is silver."""
     fields = [T.StructField(c, T.StringType(), True) for c in columns]
@@ -130,6 +129,7 @@ def _schema_for(columns: list[str]) -> T.StructType:
 # ---------------------------------------------------------------------------
 # Writers
 # ---------------------------------------------------------------------------
+
 
 def write_recalls_bronze(
     spark: SparkSession,
@@ -149,8 +149,14 @@ def write_recalls_bronze(
     schema = _schema_for(list(RECALLS_COLUMNS))
     _create_table_if_missing(spark, table, schema)
     return _write_iterable(
-        spark, rows, list(RECALLS_COLUMNS), schema, table,
-        key_cols=["record_id"], ingest_run_id=ingest_run_id, source_url=source_url,
+        spark,
+        rows,
+        list(RECALLS_COLUMNS),
+        schema,
+        table,
+        key_cols=["record_id"],
+        ingest_run_id=ingest_run_id,
+        source_url=source_url,
     )
 
 
@@ -168,8 +174,14 @@ def write_complaints_bronze(
     schema = _schema_for(list(COMPLAINTS_COLUMNS))
     _create_table_if_missing(spark, table, schema)
     return _write_iterable(
-        spark, rows, list(COMPLAINTS_COLUMNS), schema, table,
-        key_cols=["cmplid"], ingest_run_id=ingest_run_id, source_url=source_url,
+        spark,
+        rows,
+        list(COMPLAINTS_COLUMNS),
+        schema,
+        table,
+        key_cols=["cmplid"],
+        ingest_run_id=ingest_run_id,
+        source_url=source_url,
     )
 
 
@@ -187,9 +199,14 @@ def write_investigations_bronze(
     schema = _schema_for(list(INVESTIGATIONS_COLUMNS))
     _create_table_if_missing(spark, table, schema)
     return _write_iterable(
-        spark, rows, list(INVESTIGATIONS_COLUMNS), schema, table,
+        spark,
+        rows,
+        list(INVESTIGATIONS_COLUMNS),
+        schema,
+        table,
         key_cols=["nhtsa_action_number"],
-        ingest_run_id=ingest_run_id, source_url=source_url,
+        ingest_run_id=ingest_run_id,
+        source_url=source_url,
     )
 
 
@@ -214,7 +231,11 @@ def write_tsbs_bronze(
     schema = _schema_for(list(TSBS_COLUMNS))
     _create_table_if_missing(spark, table, schema)
     return _write_iterable(
-        spark, rows, list(TSBS_COLUMNS), schema, table,
+        spark,
+        rows,
+        list(TSBS_COLUMNS),
+        schema,
+        table,
         key_cols=[
             "nhtsa_item_number",
             "tsb_id",
@@ -223,7 +244,8 @@ def write_tsbs_bronze(
             "yeartxt",
             "component_desc",
         ],
-        ingest_run_id=ingest_run_id, source_url=source_url,
+        ingest_run_id=ingest_run_id,
+        source_url=source_url,
     )
 
 
@@ -255,9 +277,14 @@ def write_investigation_documents_bronze(
     schema = _schema_for(list(_INVESTIGATION_DOCS_COLUMNS))
     _create_table_if_missing(spark, table, schema)
     return _write_iterable(
-        spark, rows, list(_INVESTIGATION_DOCS_COLUMNS), schema, table,
+        spark,
+        rows,
+        list(_INVESTIGATION_DOCS_COLUMNS),
+        schema,
+        table,
         key_cols=["document_id"],
-        ingest_run_id=ingest_run_id, source_url=source_url,
+        ingest_run_id=ingest_run_id,
+        source_url=source_url,
     )
 
 
@@ -285,22 +312,28 @@ def write_sgo_bronze(
     # union (ordered by first-seen) so no fields are silently dropped.
     seen: dict[str, None] = {}
     for r in materialised:
-        for k in r.keys():
+        for k in r:
             if k not in seen:
                 seen[k] = None
     columns = list(seen.keys())
     schema = _schema_for(columns)
     _create_table_if_missing(spark, table, schema)
     return _write_iterable(
-        spark, materialised, columns, schema, table,
+        spark,
+        materialised,
+        columns,
+        schema,
+        table,
         key_cols=[_safe_col(key_column)],
-        ingest_run_id=ingest_run_id, source_url=source_url,
+        ingest_run_id=ingest_run_id,
+        source_url=source_url,
     )
 
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _safe_col(name: str) -> str:
     """Normalise SGO header (spaces/punct) to a Delta-safe column name."""
@@ -335,7 +368,7 @@ def _write_iterable(
     # python side — letting withColumn(current_timestamp()) fill it
     # later fails because Spark validates nullability before the
     # post-hoc column replacement runs.
-    ingested_at = datetime.now(tz=timezone.utc)
+    ingested_at = datetime.now(tz=UTC)
     it = iter(rows)
     total = 0
     batch_num = 0
@@ -358,8 +391,7 @@ def _write_iterable(
         n = _merge_on_key(spark, table, df, key_cols)
         total += n
         logger.info(
-            f"{table} batch {batch_num}: merged {n:,} rows "
-            f"(running total: {total:,})"
+            f"{table} batch {batch_num}: merged {n:,} rows (running total: {total:,})"
         )
 
     if total == 0:

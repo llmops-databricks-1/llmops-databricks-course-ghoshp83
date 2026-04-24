@@ -31,6 +31,7 @@ def safe_col(name: str) -> str:
     collapsed = _SAFE_COL_PATTERN.sub("_", name.lower())
     return re.sub(r"_+", "_", collapsed).strip("_")
 
+
 # NHTSA's May-2024 MfrComms rewrite inlines up to 4000 chars of bulletin
 # text in ``summary``; occasional malformed quoting also makes the csv
 # reader slurp across many rows until the next quote. The stdlib
@@ -45,22 +46,22 @@ csv.field_size_limit(sys.maxsize)
 
 RECALLS_COLUMNS: tuple[str, ...] = (
     "record_id",
-    "campno",            # NHTSA campaign number e.g. 24V001000
+    "campno",  # NHTSA campaign number e.g. 24V001000
     "maketxt",
     "modeltxt",
     "yeartxt",
-    "mfgcampno",         # manufacturer's own campaign id
-    "compname",          # raw component name
+    "mfgcampno",  # manufacturer's own campaign id
+    "compname",  # raw component name
     "mfgname",
-    "bgman",             # begin manufacture date YYYYMMDD
+    "bgman",  # begin manufacture date YYYYMMDD
     "endman",
-    "rcltypecd",         # vehicle (V) / equipment (E) / tire (T) / child (C)
-    "potaff",            # potential units affected
-    "odate",             # owner notification date
+    "rcltypecd",  # vehicle (V) / equipment (E) / tire (T) / child (C)
+    "potaff",  # potential units affected
+    "odate",  # owner notification date
     "influenced_by",
     "mfgtxt",
-    "rcdate",            # record creation date
-    "datea",             # amended record date
+    "rcdate",  # record creation date
+    "datea",  # amended record date
     "rpno",
     "fmvss",
     "desc_defect",
@@ -71,13 +72,13 @@ RECALLS_COLUMNS: tuple[str, ...] = (
     "mfr_comp_name",
     "mfr_comp_desc",
     "mfr_comp_ptno",
-    "do_not_drive",      # May 2025: consumer advisory: do not drive (Y/N)
-    "park_outside",      # May 2025: consumer advisory: park outside (Y/N)
+    "do_not_drive",  # May 2025: consumer advisory: do not drive (Y/N)
+    "park_outside",  # May 2025: consumer advisory: park outside (Y/N)
 )
 
 COMPLAINTS_COLUMNS: tuple[str, ...] = (
     "cmplid",
-    "odino",             # public ODI number used as primary key
+    "odino",  # public ODI number used as primary key
     "mfr_name",
     "maketxt",
     "modeltxt",
@@ -92,10 +93,10 @@ COMPLAINTS_COLUMNS: tuple[str, ...] = (
     "state",
     "vin",
     "datea",
-    "ldate",             # date loaded
+    "ldate",  # date loaded
     "miles",
     "occurences",
-    "cdescr",            # narrative
+    "cdescr",  # narrative
     "cmpl_type",
     "police_rpt_yn",
     "purch_dt",
@@ -136,11 +137,11 @@ INVESTIGATIONS_COLUMNS: tuple[str, ...] = (
     "maketxt",
     "modeltxt",
     "yeartxt",
-    "component_name",        # NHTSA "COMPNAME"
-    "mfr_name",              # NHTSA "MFR_NAME"
-    "action_open_date",      # NHTSA "ODATE"  YYYYMMDD
-    "action_close_date",     # NHTSA "CDATE"  YYYYMMDD — null while open
-    "campno",                # linked recall campaign number, if any
+    "component_name",  # NHTSA "COMPNAME"
+    "mfr_name",  # NHTSA "MFR_NAME"
+    "action_open_date",  # NHTSA "ODATE"  YYYYMMDD
+    "action_close_date",  # NHTSA "CDATE"  YYYYMMDD — null while open
+    "campno",  # linked recall campaign number, if any
     "subject",
     "summary",
 )
@@ -151,26 +152,28 @@ TSBS_COLUMNS: tuple[str, ...] = (
     # a ``pdf_path`` URL; the new one does not — the Summary field now
     # holds up to 4000 chars of the communication's content inline, so
     # downstream silver/gold no longer needs a per-TSB PDF download.
-    "nhtsa_item_number",          # NHTSA ID Number
-    "replacement_bulletin_no",    # Replacement Service Bulletin Number
-    "changed_date",               # Date Added to File (YYYYMMDD)
-    "tsb_id",                     # Mfr's TSB / Document ID
-    "orig_date",                  # Mfr Communication Date (YYYYMMDD)
+    "nhtsa_item_number",  # NHTSA ID Number
+    "replacement_bulletin_no",  # Replacement Service Bulletin Number
+    "changed_date",  # Date Added to File (YYYYMMDD)
+    "tsb_id",  # Mfr's TSB / Document ID
+    "orig_date",  # Mfr Communication Date (YYYYMMDD)
     "mfr_internal_campaign_id",
-    "communication_type",         # Service Bulletin / Campaign / Warranty / OTA / Emissions / Other
+    # Service Bulletin / Campaign / Warranty / OTA / Emissions / Other
+    "communication_type",
     "maketxt",
     "modeltxt",
     "yeartxt",
-    "component_desc",             # NHTSA Components (comma-separated)
+    "component_desc",  # NHTSA Components (comma-separated)
     "mfr_component_system",
     "mfr_component_subsystem",
-    "summary",                    # up to 4000 chars of the TSB body
+    "summary",  # up to 4000 chars of the TSB body
 )
 
 
 # ---------------------------------------------------------------------------
 # Generic flat-file reader.
 # ---------------------------------------------------------------------------
+
 
 def parse_flat_file(
     text: str,
@@ -210,8 +213,7 @@ def read_zip_member(zip_bytes: bytes, member_pattern: str) -> str:
                 # NHTSA files are typically Latin-1 / Windows-1252, not UTF-8.
                 return raw.decode("latin-1", errors="replace")
     raise FileNotFoundError(
-        f"No member matching '{member_pattern}' in zip "
-        f"(members: {zf.namelist()})"
+        f"No member matching '{member_pattern}' in zip (members: {zf.namelist()})"
     )
 
 

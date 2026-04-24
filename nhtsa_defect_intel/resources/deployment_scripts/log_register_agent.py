@@ -13,6 +13,7 @@
 
 # COMMAND ----------
 import mlflow
+from pyspark.sql import SparkSession
 
 from nhtsa_curator.agent import log_register_agent
 from nhtsa_curator.config import load_config
@@ -22,8 +23,6 @@ from nhtsa_curator.utils.common import (
     get_widget,
     set_mlflow_tracking_uri,
 )
-
-from pyspark.sql import SparkSession
 
 set_mlflow_tracking_uri()
 
@@ -60,9 +59,7 @@ for tbl in (
     "gold_narrative_chunks",
 ):
     try:
-        v = get_delta_table_version(
-            spark, f"{cfg.catalog}.{cfg.db_schema}.{tbl}"
-        )
+        v = get_delta_table_version(spark, f"{cfg.catalog}.{cfg.db_schema}.{tbl}")
         gold_versions[tbl] = v
     except Exception as exc:  # noqa: BLE001
         print(f"[warn] gold table {tbl} version lookup failed: {exc}")

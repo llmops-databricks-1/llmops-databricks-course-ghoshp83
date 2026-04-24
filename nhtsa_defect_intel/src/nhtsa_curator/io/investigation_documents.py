@@ -124,8 +124,7 @@ def list_documents_for_action(
     try:
         payload = json.loads(text)
         results = [
-            {"url": urljoin(url, u), "title": t}
-            for u, t in _extract_from_json(payload)
+            {"url": urljoin(url, u), "title": t} for u, t in _extract_from_json(payload)
         ]
         if results:
             return results

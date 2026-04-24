@@ -29,7 +29,8 @@ n = write_silver_investigations(
 )
 
 # COMMAND ----------
-display(spark.sql(f"""
+display(
+    spark.sql(f"""
     SELECT
         investigation_type,
         status,
@@ -39,4 +40,5 @@ display(spark.sql(f"""
     FROM {cfg.full_schema_name}.silver_investigations
     GROUP BY investigation_type, status
     ORDER BY investigation_type, status
-"""))
+""")
+)

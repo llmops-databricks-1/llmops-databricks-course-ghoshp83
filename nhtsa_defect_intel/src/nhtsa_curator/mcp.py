@@ -26,10 +26,11 @@ themselves never import Databricks modules directly.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 import mlflow
 from loguru import logger
@@ -37,7 +38,6 @@ from loguru import logger
 from .config import ProjectConfig, VectorSearchConfig
 from .genie import GENIE_TABLES
 from .vector_search import INDEX_COLUMNS, similarity_search
-
 
 # ---------------------------------------------------------------------------
 # Tool names — exported so the agent + tests can reference them.
@@ -59,6 +59,7 @@ ALL_TOOL_NAMES = (
 # ---------------------------------------------------------------------------
 # Context — the dependency bundle every tool needs.
 # ---------------------------------------------------------------------------
+
 
 class SqlExecutor(Protocol):
     """Minimal protocol any SQL-runner needs to implement.
@@ -95,6 +96,7 @@ class ToolContext:
 # ---------------------------------------------------------------------------
 # Tool specs — the OpenAI-compatible function descriptions passed to the LLM.
 # ---------------------------------------------------------------------------
+
 
 def _vs_filter_schema() -> dict:
     """The filter subset we expose to the LLM.
@@ -256,6 +258,7 @@ def tool_specs(cfg: ProjectConfig) -> list[dict]:
 # Tool implementations.
 # ---------------------------------------------------------------------------
 
+
 def _run_genie(ctx: ToolContext, question: str) -> dict:
     """Submit a question to the configured Genie space and return results.
 
@@ -295,9 +298,11 @@ def _run_genie(ctx: ToolContext, question: str) -> dict:
     msg = client.get_message(
         space_id=ctx.cfg.genie_space_id, conversation_id=conv_id, message_id=msg_id
     )
-    attachments = getattr(msg, "attachments", None) or (
-        msg.get("attachments") if isinstance(msg, dict) else None
-    ) or []
+    attachments = (
+        getattr(msg, "attachments", None)
+        or (msg.get("attachments") if isinstance(msg, dict) else None)
+        or []
+    )
     sql = ""
     if attachments:
         first = attachments[0]
@@ -330,7 +335,11 @@ def _normalise_statement_result(res: Any) -> list[dict]:
     """
     sr = getattr(res, "statement_response", None)
     if sr is None:
-        sr = res["statement_response"] if isinstance(res, dict) and "statement_response" in res else res
+        sr = (
+            res["statement_response"]
+            if isinstance(res, dict) and "statement_response" in res
+            else res
+        )
     if isinstance(sr, dict):
         manifest = sr.get("manifest", {})
         cols = [c["name"] for c in manifest.get("schema", {}).get("columns", [])]
@@ -342,8 +351,9 @@ def _normalise_statement_result(res: Any) -> list[dict]:
     return [dict(zip(cols, row, strict=False)) for row in data]
 
 
-def _run_vector_search(ctx: ToolContext, query: str, filters: dict | None,
-                      num_results: int | None) -> dict:
+def _run_vector_search(
+    ctx: ToolContext, query: str, filters: dict | None, num_results: int | None
+) -> dict:
     """Run a filtered similarity search and return flattened hits."""
     if ctx.vs_client is None:
         raise RuntimeError("ToolContext.vs_client is not wired.")
@@ -440,6 +450,7 @@ def _sql_quote(raw: Any) -> str:
 # Dispatcher.
 # ---------------------------------------------------------------------------
 
+
 def execute_tool(name: str, args: dict, ctx: ToolContext) -> dict:
     """Run the named tool and return a JSON-serialisable dict.
 
@@ -505,17 +516,13 @@ def _span_set_inputs(span: Any, inputs: dict) -> None:
     that doesn't implement ``set_inputs`` on every MLflow build. The
     agent must never blow up because instrumentation is degraded.
     """
-    try:
+    with contextlib.suppress(Exception):
         span.set_inputs(inputs)
-    except Exception:  # noqa: BLE001
-        pass
 
 
 def _span_set_outputs(span: Any, outputs: Any) -> None:
-    try:
+    with contextlib.suppress(Exception):
         span.set_outputs(outputs)
-    except Exception:  # noqa: BLE001
-        pass
 
 
 def _span_output_preview(out: dict, max_rows: int = 3) -> dict:
@@ -548,7 +555,7 @@ def serialise_tool_result(result: dict, max_chars: int = 8000) -> str:
     trimmed = payload[:max_chars]
     return (
         trimmed
-        + f'... [TRUNCATED {len(payload) - max_chars} chars — '
+        + f"... [TRUNCATED {len(payload) - max_chars} chars — "
         + 'narrow your filters or lower num_results]"'
     )
 
@@ -559,6 +566,7 @@ def serialise_tool_result(result: dict, max_chars: int = 8000) -> str:
 # Phase 4 but the deployment notebook can use these to enumerate tools
 # from a Managed MCP server instead of from ``tool_specs``.
 # ---------------------------------------------------------------------------
+
 
 def genie_mcp_url(workspace_host: str, space_id: str) -> str:
     """Return the Databricks-managed MCP endpoint URL for a Genie space."""
@@ -573,6 +581,7 @@ def vector_search_mcp_url(workspace_host: str, index_name: str) -> str:
 # ---------------------------------------------------------------------------
 # Filter merge — used by the agent when accumulating state across turns.
 # ---------------------------------------------------------------------------
+
 
 def merge_filters(existing: dict | None, new: dict | None) -> dict:
     """Merge an ``accumulated_filters`` bag with a new turn's filters.

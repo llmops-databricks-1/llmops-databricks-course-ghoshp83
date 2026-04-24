@@ -9,8 +9,6 @@ Spark-free. Verifies:
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
 from nhtsa_curator.config import ProjectConfig
@@ -82,11 +80,7 @@ def test_every_exposed_table_has_a_comment() -> None:
 
 
 def test_column_comments_target_only_exposed_tables() -> None:
-    bad = [
-        (table, col)
-        for (table, col) in COLUMN_COMMENTS
-        if table not in GENIE_TABLES
-    ]
+    bad = [(table, col) for (table, col) in COLUMN_COMMENTS if table not in GENIE_TABLES]
     assert not bad, f"column comments target unknown tables: {bad}"
 
 
@@ -139,5 +133,7 @@ def test_default_trusted_queries_seed_set(cfg: ProjectConfig) -> None:
     assert len(queries) == 5
     for q in queries:
         assert q.name and q.question and q.sql
-        assert f"{cfg.full_schema_name}.gold_" in q.sql or \
-               f"{cfg.full_schema_name}.dim_" in q.sql
+        assert (
+            f"{cfg.full_schema_name}.gold_" in q.sql
+            or f"{cfg.full_schema_name}.dim_" in q.sql
+        )

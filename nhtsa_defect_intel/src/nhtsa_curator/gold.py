@@ -38,12 +38,12 @@ from pyspark.sql import types as T
 from .chunking import chunk_text
 from .config import ChunkingConfig, ProjectConfig
 
-
 # ---------------------------------------------------------------------------
 # Dimensions
 # ---------------------------------------------------------------------------
 
-def _vehicle_key() -> "F.Column":
+
+def _vehicle_key() -> F.Column:
     return F.xxhash64(
         F.coalesce(F.col("make_norm"), F.lit("")),
         F.coalesce(F.col("model_norm"), F.lit("")),
@@ -51,7 +51,7 @@ def _vehicle_key() -> "F.Column":
     )
 
 
-def _component_key() -> "F.Column":
+def _component_key() -> F.Column:
     return F.xxhash64(
         F.coalesce(F.col("component_group"), F.lit("")),
         F.coalesce(F.col("component_leaf"), F.lit("")),
@@ -61,16 +61,14 @@ def _component_key() -> "F.Column":
 def write_dim_vehicle(spark: SparkSession, cfg: ProjectConfig) -> int:
     """Union distinct (make, model, year) tuples across all silver tables."""
     parts = []
-    for tbl, has_leaf in [
-        (f"{cfg.full_schema_name}.silver_recalls", True),
-        (f"{cfg.full_schema_name}.silver_complaints", True),
-        (f"{cfg.full_schema_name}.silver_tsbs", True),
+    for tbl in [
+        f"{cfg.full_schema_name}.silver_recalls",
+        f"{cfg.full_schema_name}.silver_complaints",
+        f"{cfg.full_schema_name}.silver_tsbs",
     ]:
         if not spark.catalog.tableExists(tbl):
             continue
-        parts.append(
-            spark.table(tbl).select("make_norm", "model_norm", "model_year")
-        )
+        parts.append(spark.table(tbl).select("make_norm", "model_norm", "model_year"))
     if not parts:
         raise RuntimeError("No silver tables found to build dim_vehicle from")
 
@@ -78,13 +76,13 @@ def write_dim_vehicle(spark: SparkSession, cfg: ProjectConfig) -> int:
     for p in parts[1:]:
         df = df.unionByName(p)
 
-    df = (
-        df.dropDuplicates(["make_norm", "model_norm", "model_year"])
-        .withColumn("vehicle_key", _vehicle_key())
+    df = df.dropDuplicates(["make_norm", "model_norm", "model_year"]).withColumn(
+        "vehicle_key", _vehicle_key()
     )
     table = f"{cfg.full_schema_name}.dim_vehicle"
-    df.write.format("delta").mode("overwrite") \
-        .option("overwriteSchema", "true").saveAsTable(table)
+    df.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable(table)
     n = spark.table(table).count()
     logger.info(f"dim_vehicle: {n:,} rows")
     return n
@@ -115,13 +113,13 @@ def write_dim_component(spark: SparkSession, cfg: ProjectConfig) -> int:
     for p in parts[1:]:
         df = df.unionByName(p)
 
-    df = (
-        df.dropDuplicates(["component_group", "component_leaf"])
-        .withColumn("component_id", _component_key())
+    df = df.dropDuplicates(["component_group", "component_leaf"]).withColumn(
+        "component_id", _component_key()
     )
     table = f"{cfg.full_schema_name}.dim_component"
-    df.write.format("delta").mode("overwrite") \
-        .option("overwriteSchema", "true").saveAsTable(table)
+    df.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable(table)
     n = spark.table(table).count()
     logger.info(f"dim_component: {n:,} rows")
     return n
@@ -143,13 +141,13 @@ def write_dim_oem_group(spark: SparkSession, cfg: ProjectConfig) -> int:
     df = parts[0]
     for p in parts[1:]:
         df = df.unionByName(p)
-    df = (
-        df.dropDuplicates(["oem_group"])
-        .withColumn("oem_group_id", F.xxhash64(F.coalesce(F.col("oem_group"), F.lit("UNKNOWN"))))
+    df = df.dropDuplicates(["oem_group"]).withColumn(
+        "oem_group_id", F.xxhash64(F.coalesce(F.col("oem_group"), F.lit("UNKNOWN")))
     )
     table = f"{cfg.full_schema_name}.dim_oem_group"
-    df.write.format("delta").mode("overwrite") \
-        .option("overwriteSchema", "true").saveAsTable(table)
+    df.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable(table)
     n = spark.table(table).count()
     logger.info(f"dim_oem_group: {n:,} rows")
     return n
@@ -157,17 +155,18 @@ def write_dim_oem_group(spark: SparkSession, cfg: ProjectConfig) -> int:
 
 def write_dim_date(spark: SparkSession, cfg: ProjectConfig) -> int:
     """Calendar dim spanning the union of date columns across silver."""
+    schema = cfg.full_schema_name
     bounds = spark.sql(f"""
         SELECT
             LEAST(
-                (SELECT min(record_creation_date) FROM {cfg.full_schema_name}.silver_recalls),
-                (SELECT min(incident_date)        FROM {cfg.full_schema_name}.silver_complaints),
-                (SELECT min(open_date)            FROM {cfg.full_schema_name}.silver_investigations)
+                (SELECT min(record_creation_date) FROM {schema}.silver_recalls),
+                (SELECT min(incident_date)        FROM {schema}.silver_complaints),
+                (SELECT min(open_date)            FROM {schema}.silver_investigations)
             ) AS d_min,
             GREATEST(
-                (SELECT max(record_creation_date) FROM {cfg.full_schema_name}.silver_recalls),
-                (SELECT max(incident_date)        FROM {cfg.full_schema_name}.silver_complaints),
-                (SELECT max(open_date)            FROM {cfg.full_schema_name}.silver_investigations),
+                (SELECT max(record_creation_date) FROM {schema}.silver_recalls),
+                (SELECT max(incident_date)        FROM {schema}.silver_complaints),
+                (SELECT max(open_date)            FROM {schema}.silver_investigations),
                 CURRENT_DATE()
             ) AS d_max
     """).collect()[0]
@@ -176,8 +175,9 @@ def write_dim_date(spark: SparkSession, cfg: ProjectConfig) -> int:
     if d_min is None or d_max is None:
         # Cold start — fall back to last 30 years.
         d_max = spark.sql("SELECT current_date() AS d").collect()[0]["d"]
-        d_min = spark.sql("SELECT add_months(current_date(), -360) AS d") \
-            .collect()[0]["d"]
+        d_min = spark.sql("SELECT add_months(current_date(), -360) AS d").collect()[0][
+            "d"
+        ]
 
     table = f"{cfg.full_schema_name}.dim_date"
     spark.sql(f"""
@@ -203,33 +203,34 @@ def write_dim_date(spark: SparkSession, cfg: ProjectConfig) -> int:
 # Facts
 # ---------------------------------------------------------------------------
 
+
 def _join_keys(df: DataFrame) -> DataFrame:
     return (
         df.withColumn("vehicle_key", _vehicle_key())
         .withColumn("component_id", _component_key())
-        .withColumn("oem_group_id", F.xxhash64(F.coalesce(F.col("oem_group"), F.lit("UNKNOWN"))))
+        .withColumn(
+            "oem_group_id", F.xxhash64(F.coalesce(F.col("oem_group"), F.lit("UNKNOWN")))
+        )
     )
 
 
 def write_gold_recalls_fact(spark: SparkSession, cfg: ProjectConfig) -> int:
     src = spark.table(f"{cfg.full_schema_name}.silver_recalls")
-    fact = (
-        _join_keys(src)
-        .select(
-            "record_id",
-            "campaign_number",
-            "vehicle_key",
-            "component_id",
-            "oem_group_id",
-            "units_affected",
-            F.col("owner_notify_date").alias("event_date"),
-            "recall_type_code",
-            "fmvss",
-        )
+    fact = _join_keys(src).select(
+        "record_id",
+        "campaign_number",
+        "vehicle_key",
+        "component_id",
+        "oem_group_id",
+        "units_affected",
+        F.col("owner_notify_date").alias("event_date"),
+        "recall_type_code",
+        "fmvss",
     )
     table = f"{cfg.full_schema_name}.gold_recalls_fact"
-    fact.write.format("delta").mode("overwrite") \
-        .option("overwriteSchema", "true").saveAsTable(table)
+    fact.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable(table)
     n = spark.table(table).count()
     logger.info(f"gold_recalls_fact: {n:,} rows")
     return n
@@ -237,28 +238,25 @@ def write_gold_recalls_fact(spark: SparkSession, cfg: ProjectConfig) -> int:
 
 def write_gold_complaints_fact(spark: SparkSession, cfg: ProjectConfig) -> int:
     src = spark.table(f"{cfg.full_schema_name}.silver_complaints")
-    fact = (
-        _join_keys(src)
-        .select(
-            "complaint_id",
-            "odi_number",
-            "vehicle_key",
-            "component_id",
-            "oem_group_id",
-            F.col("incident_date").alias("event_date"),
-            "crash",
-            "fire",
-            "injured",
-            "deaths",
-            "miles",
-            "state",
-            "complaint_source",
-        )
+    fact = _join_keys(src).select(
+        "complaint_id",
+        "odi_number",
+        "vehicle_key",
+        "component_id",
+        "oem_group_id",
+        F.col("incident_date").alias("event_date"),
+        "crash",
+        "fire",
+        "injured",
+        "deaths",
+        "miles",
+        "state",
+        "complaint_source",
     )
     table = f"{cfg.full_schema_name}.gold_complaints_fact"
-    fact.write.format("delta").mode("overwrite") \
-        .option("overwriteSchema", "true") \
-        .partitionBy("state").saveAsTable(table)
+    fact.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).partitionBy("state").saveAsTable(table)
     n = spark.table(table).count()
     logger.info(f"gold_complaints_fact: {n:,} rows")
     return n
@@ -272,23 +270,21 @@ def write_gold_investigations_fact(spark: SparkSession, cfg: ProjectConfig) -> i
         .withColumn("model_year", F.lit(None).cast("int"))
         .withColumn("component_leaf", F.lit(None).cast("string"))
     )
-    fact = (
-        _join_keys(src)
-        .select(
-            "nhtsa_action_number",
-            "investigation_type",
-            "status",
-            "days_open",
-            "vehicle_key",
-            "component_id",
-            "oem_group_id",
-            F.col("open_date").alias("event_date"),
-            "close_date",
-        )
+    fact = _join_keys(src).select(
+        "nhtsa_action_number",
+        "investigation_type",
+        "status",
+        "days_open",
+        "vehicle_key",
+        "component_id",
+        "oem_group_id",
+        F.col("open_date").alias("event_date"),
+        "close_date",
     )
     table = f"{cfg.full_schema_name}.gold_investigations_fact"
-    fact.write.format("delta").mode("overwrite") \
-        .option("overwriteSchema", "true").saveAsTable(table)
+    fact.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable(table)
     n = spark.table(table).count()
     logger.info(f"gold_investigations_fact: {n:,} rows")
     return n
@@ -298,9 +294,11 @@ def write_gold_investigations_fact(spark: SparkSession, cfg: ProjectConfig) -> i
 # Narrative chunks
 # ---------------------------------------------------------------------------
 
-def _chunk_udf(chunk_size: int, overlap: int, separator: str):
-    def _do(text: str | None):
+
+def _chunk_udf(chunk_size: int, overlap: int, separator: str) -> F.UserDefinedFunction:
+    def _do(text: str | None) -> list[str]:
         return chunk_text(text, chunk_size, overlap, separator)
+
     return F.udf(_do, T.ArrayType(T.StringType()))
 
 
@@ -404,8 +402,7 @@ def write_gold_narrative_chunks(
         union = union.unionByName(p)
 
     chunked = (
-        union
-        .filter(F.col("body").isNotNull() & (F.length("body") > 0))
+        union.filter(F.col("body").isNotNull() & (F.length("body") > 0))
         .withColumn("chunks", chunk(F.col("body")))
         .select("*", F.posexplode("chunks").alias("chunk_idx", "content"))
         .drop("body", "chunks")
@@ -469,8 +466,8 @@ def write_gold_narrative_chunks(
 
     table = f"{cfg.full_schema_name}.gold_narrative_chunks"
     (
-        final
-        .write.format("delta").mode("overwrite")
+        final.write.format("delta")
+        .mode("overwrite")
         .option("overwriteSchema", "true")
         .option("delta.enableChangeDataFeed", "true")  # Vector Search needs CDF
         .saveAsTable(table)

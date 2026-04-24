@@ -33,7 +33,9 @@ from nhtsa_curator.config import get_env, load_config
 spark = SparkSession.builder.getOrCreate()
 
 dbutils.widgets.text("env", "dev")
-dbutils.widgets.text("run_id_filter", "", "Only triage runs tagged with this run_id (blank = latest).")
+dbutils.widgets.text(
+    "run_id_filter", "", "Only triage runs tagged with this run_id (blank = latest)."
+)
 dbutils.widgets.text("max_tier1_scored", "25", "How many tier-1 scored rows to print.")
 dbutils.widgets.text("max_tier2_failures", "10", "How many tier-2 failures to print.")
 
@@ -121,8 +123,9 @@ print(json.dumps(agg_snapshot, indent=2))
 # MAGIC row. We download + parse them once here, then reuse the list across
 # MAGIC the triage cells below.
 
+
 # COMMAND ----------
-def _load_per_question(run) -> list[dict]:
+def _load_per_question(run: mlflow.entities.Run) -> list[dict]:
     """Download + parse per_question/*.json for one MLflow run."""
     try:
         artifact_dir = client.download_artifacts(run.info.run_id, "per_question")
@@ -264,10 +267,7 @@ for r in t2_failed[:max_tier2_failures]:
     answer_alphanum = "".join(c for c in answer.lower() if c.isalnum())
 
     if cite_ok is False:
-        if id_numeric and id_numeric in answer_alphanum:
-            bucket = "A"
-        else:
-            bucket = "B"
+        bucket = "A" if id_numeric and id_numeric in answer_alphanum else "B"
     elif cite_ok is True and (judge_score is None):
         bucket = "D"
     elif cite_ok is True and isinstance(judge_score, (int, float)) and judge_score < 4:

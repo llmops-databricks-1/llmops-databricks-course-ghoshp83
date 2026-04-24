@@ -45,10 +45,10 @@ from __future__ import annotations
 import json
 import threading
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Callable, Protocol
-
+from datetime import UTC, datetime
+from typing import Any, Protocol
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -90,6 +90,7 @@ class Session:
 # Protocol
 # ---------------------------------------------------------------------------
 
+
 class SessionStore(Protocol):
     """Minimum surface the agent needs from a session store."""
 
@@ -112,9 +113,7 @@ class SessionStore(Protocol):
         """Persist a turn. Caller sets ``turn_idx`` explicitly."""
         ...
 
-    def get_history(
-        self, session_id: str, max_turns: int | None = None
-    ) -> list[Turn]:
+    def get_history(self, session_id: str, max_turns: int | None = None) -> list[Turn]:
         """Return turns ordered by ``turn_idx`` ascending."""
         ...
 
@@ -170,6 +169,7 @@ DDL_STATEMENTS: tuple[str, ...] = (
 # ---------------------------------------------------------------------------
 # Postgres / Lakebase implementation
 # ---------------------------------------------------------------------------
+
 
 class PostgresSessionStore:
     """``SessionStore`` backed by a Lakebase-managed Postgres.
@@ -264,9 +264,7 @@ class PostgresSessionStore:
 
         self._run(_do)
 
-    def get_history(
-        self, session_id: str, max_turns: int | None = None
-    ) -> list[Turn]:
+    def get_history(self, session_id: str, max_turns: int | None = None) -> list[Turn]:
         def _do(conn: Any) -> list[Turn]:
             with conn.cursor() as cur:
                 q = (
@@ -283,7 +281,9 @@ class PostgresSessionStore:
                     turn_idx=r[1],
                     role=r[2],
                     content=r[3],
-                    tool_calls=r[4] if isinstance(r[4], list) else json.loads(r[4] or "[]"),
+                    tool_calls=r[4]
+                    if isinstance(r[4], list)
+                    else json.loads(r[4] or "[]"),
                     created_at=r[5],
                 )
                 for r in rows
@@ -341,6 +341,7 @@ class PostgresSessionStore:
 # In-memory implementation — used by tests + notebook debugging.
 # ---------------------------------------------------------------------------
 
+
 class InMemorySessionStore:
     """Thread-safe in-memory ``SessionStore`` stand-in.
 
@@ -360,7 +361,7 @@ class InMemorySessionStore:
 
     def create_session(self, user_id: str | None = None) -> str:
         sid = str(uuid.uuid4())
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         with self._lock:
             self._sessions[sid] = Session(
                 session_id=sid,
@@ -372,7 +373,7 @@ class InMemorySessionStore:
         return sid
 
     def ensure_session(self, session_id: str, user_id: str | None = None) -> None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         with self._lock:
             if session_id in self._sessions:
                 return
@@ -396,14 +397,12 @@ class InMemorySessionStore:
                 )
             # Stamp a created_at if the caller didn't.
             if turn.created_at is None:
-                turn.created_at = datetime.now(timezone.utc)
+                turn.created_at = datetime.now(UTC)
             turns.append(turn)
             turns.sort(key=lambda t: t.turn_idx)
             self._sessions[turn.session_id].last_turn_at = turn.created_at
 
-    def get_history(
-        self, session_id: str, max_turns: int | None = None
-    ) -> list[Turn]:
+    def get_history(self, session_id: str, max_turns: int | None = None) -> list[Turn]:
         with self._lock:
             turns = list(self._turns.get(session_id, []))
         if max_turns is not None:

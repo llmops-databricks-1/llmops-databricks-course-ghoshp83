@@ -110,12 +110,12 @@ tier3_questions = [
 # pull just these runs when scripting the live demo. (session_id is a
 # UUID — not human-readable, so we use request_id as the filter handle.)
 demo_pick_questions = [
-    #"Compare heavy truck brake recalls issued by PACCAR vs. Daimler Trucks NA 2020-2024",
-    #"What are the dominant themes in SGO reports tagged 'Level 2' ADAS 2024?",
-    #"What role have OTA 'phantom braking' fixes played in Tesla recalls 2022-2025?",
-    #"What defect patterns appear in school-bus recalls since 2020?",
-    #"Describe the common complaint patterns for ADAS lane-keep assist nuisance activations across OEMs",
-    #"Summarise the current state of NHTSA engagement with rear cross-traffic alert defects",
+    # "Compare heavy truck brake recalls issued by PACCAR vs. Daimler Trucks NA 2020-2024",
+    # "What are the dominant themes in SGO reports tagged 'Level 2' ADAS 2024?",
+    # "What role have OTA 'phantom braking' fixes played in Tesla recalls 2022-2025?",
+    # "What defect patterns appear in school-bus recalls since 2020?",
+    # "Describe the common complaint patterns for ADAS lane-keep assist nuisance activations across OEMs",
+    # "Summarise the current state of NHTSA engagement with rear cross-traffic alert defects",
     "How many recall campaigns were issued for Ford in 2024?",
     "List the top 5 OEMs by recall volume over the last 24 months.",
     "How many SGO AV crash reports were filed in 2024 across all reporting entities?",
@@ -125,7 +125,7 @@ demo_pick_questions = [
     "What are the dominant themes in SGO reports tagged 'Level 2' ADAS in 2024?",
     "Describe the common complaint patterns for ADAS lane-keep assist nuisance activations across OEMs.",
     "What defect patterns appear in school-bus recalls since 2020?",
-    "Summarise the current state of NHTSA engagement with rear cross-traffic alert defects."
+    "Summarise the current state of NHTSA engagement with rear cross-traffic alert defects.",
 ]
 
 queries = tier1_questions + tier2_questions + tier3_questions + demo_pick_questions

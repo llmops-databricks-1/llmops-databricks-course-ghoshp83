@@ -25,22 +25,23 @@ any time.
 from __future__ import annotations
 
 from loguru import logger
-from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
 from .config import ProjectConfig
 from .taxonomy import make_to_oem_group
 
-
 # ---------------------------------------------------------------------------
 # Shared UDFs (registered lazily so import doesn't require a SparkSession).
 # ---------------------------------------------------------------------------
 
-_OEM_RESULT = T.StructType([
-    T.StructField("make_norm", T.StringType(), True),
-    T.StructField("oem_group", T.StringType(), True),
-])
+_OEM_RESULT = T.StructType(
+    [
+        T.StructField("make_norm", T.StringType(), True),
+        T.StructField("oem_group", T.StringType(), True),
+    ]
+)
 
 
 def _register_udfs(spark: SparkSession, taxonomy_path: str) -> None:
@@ -54,7 +55,7 @@ def _register_udfs(spark: SparkSession, taxonomy_path: str) -> None:
     that isn't worth inlining as a broadcast join at this scale.
     """
 
-    def _resolve_oem(make: str | None):
+    def _resolve_oem(make: str | None) -> tuple[str | None, str | None]:
         canonical, group = make_to_oem_group(make, taxonomy_path)
         return (canonical, group)
 
@@ -76,7 +77,7 @@ _PII_REGEXES: tuple[tuple[str, str], ...] = (
 )
 
 
-def _scrub_pii_col(col_name: str) -> "F.Column":
+def _scrub_pii_col(col_name: str) -> F.Column:
     """Native regex chain equivalent of ``pii.scrub_text``.
 
     Stays in the JVM so 2.5M-row complaint narratives don't cross the
@@ -88,7 +89,7 @@ def _scrub_pii_col(col_name: str) -> "F.Column":
     return out
 
 
-def _component_group_col(col_name: str) -> "F.Column":
+def _component_group_col(col_name: str) -> F.Column:
     """Top-level NHTSA component group; matches ``taxonomy.component_group``.
 
     Native equivalent of the Python helper: split on ``:``, take the
@@ -98,14 +99,14 @@ def _component_group_col(col_name: str) -> "F.Column":
     return F.when(head == F.upper(head), F.initcap(head)).otherwise(head)
 
 
-def _component_leaf_col(col_name: str) -> "F.Column":
+def _component_leaf_col(col_name: str) -> F.Column:
     """Leaf NHTSA component name; matches ``taxonomy.component_leaf``."""
     parts = F.split(F.col(col_name), ":")
     leaf = F.trim(F.element_at(parts, -1))
     return F.when(leaf == F.upper(leaf), F.initcap(leaf)).otherwise(leaf)
 
 
-def _yyyymmdd(col: str) -> "F.Column":
+def _yyyymmdd(col: str) -> F.Column:
     """Parse NHTSA's ``YYYYMMDD`` strings into a DATE.
 
     Uses ``try_to_date`` because NHTSA flat files routinely contain empty
@@ -118,17 +119,17 @@ def _yyyymmdd(col: str) -> "F.Column":
     return F.expr(f"try_to_date({col}, 'yyyyMMdd')")
 
 
-def _try_int(col: str) -> "F.Column":
+def _try_int(col: str) -> F.Column:
     """Lenient int cast; NHTSA uses blank strings for missing numerics."""
     return F.expr(f"try_cast({col} as int)")
 
 
-def _try_long(col: str) -> "F.Column":
+def _try_long(col: str) -> F.Column:
     """Lenient long cast; NHTSA uses blank strings for missing numerics."""
     return F.expr(f"try_cast({col} as long)")
 
 
-def _yn_to_bool(col: str) -> "F.Column":
+def _yn_to_bool(col: str) -> F.Column:
     """Map NHTSA's Y/N (with N as default for blanks) to a bool."""
     return F.when(F.upper(F.col(col)) == "Y", F.lit(True)).otherwise(F.lit(False))
 
@@ -136,6 +137,7 @@ def _yn_to_bool(col: str) -> "F.Column":
 # ---------------------------------------------------------------------------
 # Per-dataset writers
 # ---------------------------------------------------------------------------
+
 
 def write_silver_recalls(
     spark: SparkSession,
@@ -151,38 +153,34 @@ def write_silver_recalls(
     df = spark.table(bronze)
     oem = F.expr("resolve_oem(maketxt)")
 
-    out = (
-        df
-        .withColumn("_oem", oem)
-        .select(
-            F.col("record_id").cast("string").alias("record_id"),
-            F.col("campno").alias("campaign_number"),
-            F.col("mfgcampno").alias("mfr_campaign_number"),
-            F.col("_oem.make_norm").alias("make_norm"),
-            F.col("_oem.oem_group").alias("oem_group"),
-            F.col("modeltxt").alias("model_norm"),
-            _try_int("yeartxt").alias("model_year"),
-            F.col("compname").alias("component_raw"),
-            _component_group_col("compname").alias("component_group"),
-            _component_leaf_col("compname").alias("component_leaf"),
-            F.col("rcltypecd").alias("recall_type_code"),
-            _try_long("potaff").alias("units_affected"),
-            _yyyymmdd("odate").alias("owner_notify_date"),
-            _yyyymmdd("rcdate").alias("record_creation_date"),
-            _yyyymmdd("bgman").alias("manufacture_begin_date"),
-            _yyyymmdd("endman").alias("manufacture_end_date"),
-            F.col("fmvss").alias("fmvss"),
-            F.col("desc_defect").alias("defect_description"),
-            F.col("conequence_defect").alias("consequence_description"),
-            F.col("corrective_action").alias("corrective_action"),
-            F.col("notes").alias("notes"),
-            F.col("_ingested_at").alias("_bronze_ingested_at"),
-            F.current_timestamp().alias("_silver_at"),
-        )
+    out = df.withColumn("_oem", oem).select(
+        F.col("record_id").cast("string").alias("record_id"),
+        F.col("campno").alias("campaign_number"),
+        F.col("mfgcampno").alias("mfr_campaign_number"),
+        F.col("_oem.make_norm").alias("make_norm"),
+        F.col("_oem.oem_group").alias("oem_group"),
+        F.col("modeltxt").alias("model_norm"),
+        _try_int("yeartxt").alias("model_year"),
+        F.col("compname").alias("component_raw"),
+        _component_group_col("compname").alias("component_group"),
+        _component_leaf_col("compname").alias("component_leaf"),
+        F.col("rcltypecd").alias("recall_type_code"),
+        _try_long("potaff").alias("units_affected"),
+        _yyyymmdd("odate").alias("owner_notify_date"),
+        _yyyymmdd("rcdate").alias("record_creation_date"),
+        _yyyymmdd("bgman").alias("manufacture_begin_date"),
+        _yyyymmdd("endman").alias("manufacture_end_date"),
+        F.col("fmvss").alias("fmvss"),
+        F.col("desc_defect").alias("defect_description"),
+        F.col("conequence_defect").alias("consequence_description"),
+        F.col("corrective_action").alias("corrective_action"),
+        F.col("notes").alias("notes"),
+        F.col("_ingested_at").alias("_bronze_ingested_at"),
+        F.current_timestamp().alias("_silver_at"),
     )
-    out.write.format("delta").mode("overwrite") \
-        .option("overwriteSchema", "true") \
-        .saveAsTable(silver)
+    out.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable(silver)
     n = spark.table(silver).count()
     logger.info(f"silver_recalls: {n:,} rows")
     return n
@@ -202,40 +200,35 @@ def write_silver_complaints(
     df = spark.table(bronze)
     oem = F.expr("resolve_oem(maketxt)")
 
-    out = (
-        df
-        .withColumn("_oem", oem)
-        .select(
-            F.col("cmplid").alias("complaint_id"),
-            F.col("odino").alias("odi_number"),
-            F.col("_oem.make_norm").alias("make_norm"),
-            F.col("_oem.oem_group").alias("oem_group"),
-            F.col("modeltxt").alias("model_norm"),
-            _try_int("yeartxt").alias("model_year"),
-            F.col("compdesc").alias("component_raw"),
-            _component_group_col("compdesc").alias("component_group"),
-            _component_leaf_col("compdesc").alias("component_leaf"),
-            _yyyymmdd("faildate").alias("incident_date"),
-            _yyyymmdd("ldate").alias("loaded_date"),
-            _yyyymmdd("datea").alias("amend_date"),
-            _yn_to_bool("crash").alias("crash"),
-            _yn_to_bool("fire").alias("fire"),
-            _try_int("injured").alias("injured"),
-            _try_int("deaths").alias("deaths"),
-            _try_long("miles").alias("miles"),
-            F.col("city").alias("city"),
-            F.col("state").alias("state"),
-            _scrub_pii_col("cdescr").alias("narrative_clean"),
-            F.length(F.col("cdescr")).alias("narrative_len_orig"),
-            F.col("cmpl_type").alias("complaint_source"),
-            F.col("_ingested_at").alias("_bronze_ingested_at"),
-            F.current_timestamp().alias("_silver_at"),
-        )
+    out = df.withColumn("_oem", oem).select(
+        F.col("cmplid").alias("complaint_id"),
+        F.col("odino").alias("odi_number"),
+        F.col("_oem.make_norm").alias("make_norm"),
+        F.col("_oem.oem_group").alias("oem_group"),
+        F.col("modeltxt").alias("model_norm"),
+        _try_int("yeartxt").alias("model_year"),
+        F.col("compdesc").alias("component_raw"),
+        _component_group_col("compdesc").alias("component_group"),
+        _component_leaf_col("compdesc").alias("component_leaf"),
+        _yyyymmdd("faildate").alias("incident_date"),
+        _yyyymmdd("ldate").alias("loaded_date"),
+        _yyyymmdd("datea").alias("amend_date"),
+        _yn_to_bool("crash").alias("crash"),
+        _yn_to_bool("fire").alias("fire"),
+        _try_int("injured").alias("injured"),
+        _try_int("deaths").alias("deaths"),
+        _try_long("miles").alias("miles"),
+        F.col("city").alias("city"),
+        F.col("state").alias("state"),
+        _scrub_pii_col("cdescr").alias("narrative_clean"),
+        F.length(F.col("cdescr")).alias("narrative_len_orig"),
+        F.col("cmpl_type").alias("complaint_source"),
+        F.col("_ingested_at").alias("_bronze_ingested_at"),
+        F.current_timestamp().alias("_silver_at"),
     )
-    out.write.format("delta").mode("overwrite") \
-        .option("overwriteSchema", "true") \
-        .partitionBy("model_year") \
-        .saveAsTable(silver)
+    out.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).partitionBy("model_year").saveAsTable(silver)
     n = spark.table(silver).count()
     logger.info(f"silver_complaints: {n:,} rows (PII-scrubbed)")
     return n
@@ -261,14 +254,12 @@ def write_silver_investigations(
     # ``investigation_type`` / ``action_letter_date`` fields the prior
     # schema exposed no longer exist in FLAT_INV.
     out = (
-        df
-        .withColumn("_oem", oem)
+        df.withColumn("_oem", oem)
         .withColumn("open_d", _yyyymmdd("action_open_date"))
         .withColumn("close_d", _yyyymmdd("action_close_date"))
         .select(
             F.col("nhtsa_action_number").alias("nhtsa_action_number"),
-            F.substring(F.col("nhtsa_action_number"), 1, 2)
-                .alias("investigation_type"),
+            F.substring(F.col("nhtsa_action_number"), 1, 2).alias("investigation_type"),
             F.col("subject").alias("subject"),
             F.col("summary").alias("summary"),
             F.col("campno").alias("linked_campaign_number"),
@@ -284,22 +275,24 @@ def write_silver_investigations(
             F.when(
                 F.col("close_d").isNotNull() & F.col("open_d").isNotNull(),
                 F.datediff(F.col("close_d"), F.col("open_d")),
-            ).otherwise(
+            )
+            .otherwise(
                 F.when(
                     F.col("open_d").isNotNull(),
                     F.datediff(F.current_date(), F.col("open_d")),
                 ).otherwise(F.lit(None).cast("int"))
-            ).alias("days_open"),
+            )
+            .alias("days_open"),
             F.when(F.col("close_d").isNotNull(), F.lit("closed"))
-                .otherwise(F.lit("open"))
-                .alias("status"),
+            .otherwise(F.lit("open"))
+            .alias("status"),
             F.col("_ingested_at").alias("_bronze_ingested_at"),
             F.current_timestamp().alias("_silver_at"),
         )
     )
-    out.write.format("delta").mode("overwrite") \
-        .option("overwriteSchema", "true") \
-        .saveAsTable(silver)
+    out.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable(silver)
     n = spark.table(silver).count()
     logger.info(f"silver_investigations: {n:,} rows")
     return n
@@ -323,34 +316,29 @@ def write_silver_tsbs(
     # inline ``summary``. We surface the new metadata (communication_type,
     # mfr_component_system/subsystem) since silver is the last point
     # where the raw bronze names are still available.
-    out = (
-        df
-        .withColumn("_oem", oem)
-        .select(
-            F.col("tsb_id").alias("tsb_id"),
-            F.col("nhtsa_item_number").alias("nhtsa_item_number"),
-            F.col("replacement_bulletin_no").alias("replacement_bulletin_no"),
-            F.col("_oem.make_norm").alias("make_norm"),
-            F.col("_oem.oem_group").alias("oem_group"),
-            F.col("modeltxt").alias("model_norm"),
-            _try_int("yeartxt").alias("model_year"),
-            F.col("component_desc").alias("component_raw"),
-            _component_group_col("component_desc").alias("component_group"),
-            F.col("mfr_component_system").alias("mfr_component_system"),
-            F.col("mfr_component_subsystem").alias("mfr_component_subsystem"),
-            F.col("communication_type").alias("communication_type"),
-            F.col("summary").alias("summary"),
-            _yyyymmdd("orig_date").alias("original_date"),
-            _yyyymmdd("changed_date").alias("changed_date"),
-            F.year(_yyyymmdd("orig_date")).alias("bulletin_year"),
-            F.col("_ingested_at").alias("_bronze_ingested_at"),
-            F.current_timestamp().alias("_silver_at"),
-        )
+    out = df.withColumn("_oem", oem).select(
+        F.col("tsb_id").alias("tsb_id"),
+        F.col("nhtsa_item_number").alias("nhtsa_item_number"),
+        F.col("replacement_bulletin_no").alias("replacement_bulletin_no"),
+        F.col("_oem.make_norm").alias("make_norm"),
+        F.col("_oem.oem_group").alias("oem_group"),
+        F.col("modeltxt").alias("model_norm"),
+        _try_int("yeartxt").alias("model_year"),
+        F.col("component_desc").alias("component_raw"),
+        _component_group_col("component_desc").alias("component_group"),
+        F.col("mfr_component_system").alias("mfr_component_system"),
+        F.col("mfr_component_subsystem").alias("mfr_component_subsystem"),
+        F.col("communication_type").alias("communication_type"),
+        F.col("summary").alias("summary"),
+        _yyyymmdd("orig_date").alias("original_date"),
+        _yyyymmdd("changed_date").alias("changed_date"),
+        F.year(_yyyymmdd("orig_date")).alias("bulletin_year"),
+        F.col("_ingested_at").alias("_bronze_ingested_at"),
+        F.current_timestamp().alias("_silver_at"),
     )
-    out.write.format("delta").mode("overwrite") \
-        .option("overwriteSchema", "true") \
-        .partitionBy("bulletin_year") \
-        .saveAsTable(silver)
+    out.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).partitionBy("bulletin_year").saveAsTable(silver)
     n = spark.table(silver).count()
     logger.info(f"silver_tsbs: {n:,} rows")
     return n
@@ -427,9 +415,9 @@ def write_silver_sgo(
             f"saw {sorted(bronze_cols)}"
         )
 
-    df.write.format("delta").mode("overwrite") \
-        .option("overwriteSchema", "true") \
-        .saveAsTable(silver)
+    df.write.format("delta").mode("overwrite").option(
+        "overwriteSchema", "true"
+    ).saveAsTable(silver)
     n = spark.table(silver).count()
     logger.info(f"silver_sgo_crashes: {n:,} rows")
     return n

@@ -208,8 +208,11 @@ class NhtsaAgentModel(PythonModel):
             dbname = os.environ.get("LAKEBASE_DB", "databricks_postgres")
 
             return psycopg.connect(
-                host=host, dbname=dbname, user=username,
-                password=cred.token, sslmode="require",
+                host=host,
+                dbname=dbname,
+                user=username,
+                password=cred.token,
+                sslmode="require",
             )
 
         return PostgresSessionStore(_conn_factory)
@@ -219,6 +222,7 @@ class NhtsaAgentModel(PythonModel):
 # Helpers — built at module scope so a custom NhtsaAgentModel subclass can
 # reuse them without re-implementing the wiring.
 # ---------------------------------------------------------------------------
+
 
 def _build_llm_client(cfg: ProjectConfig) -> Any:
     """Return an OpenAI-compatible client pointed at the Databricks endpoint.
@@ -244,9 +248,12 @@ def _build_tool_context(cfg: ProjectConfig) -> ToolContext:
     # against the configured warehouse is the right path.
     def _sql(query: str) -> list[dict]:
         res = ws.statement_execution.execute_statement(
-            statement=query, warehouse_id=cfg.warehouse_id, wait_timeout="30s",
+            statement=query,
+            warehouse_id=cfg.warehouse_id,
+            wait_timeout="30s",
         )
         from .mcp import _normalise_statement_result  # noqa: PLC0415
+
         return _normalise_statement_result(res)
 
     return ToolContext(
@@ -313,9 +320,7 @@ class NhtsaResponsesAgent(ResponsesAgent):
         assert agent is not None, "NhtsaAgent not initialised"
         return agent
 
-    def predict_stream(
-        self, request: Any
-    ) -> Generator[dict, None, None]:
+    def predict_stream(self, request: Any) -> Generator[dict, None, None]:
         """Stream-shaped predict that yields one final ``message`` event.
 
         ``NhtsaAgent`` runs the tool loop synchronously and returns a
@@ -345,8 +350,9 @@ class NhtsaResponsesAgent(ResponsesAgent):
         """Non-streaming shim — collects the stream and returns a Responses dict."""
         events = list(self.predict_stream(request))
         return {
-            "output": [e["item"] for e in events if e.get("type") ==
-                       "response.output_item.done"],
+            "output": [
+                e["item"] for e in events if e.get("type") == "response.output_item.done"
+            ],
             "custom_outputs": _custom_from(request),
         }
 
@@ -382,7 +388,7 @@ def _extract_responses_request(request: Any) -> tuple[str, dict]:
 
 def _custom_from(request: Any) -> dict:
     if hasattr(request, "custom_inputs"):
-        return dict(getattr(request, "custom_inputs") or {})
+        return dict(request.custom_inputs or {})
     if isinstance(request, dict):
         return dict(request.get("custom_inputs") or {})
     return {}

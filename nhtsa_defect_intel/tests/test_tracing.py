@@ -35,7 +35,6 @@ from nhtsa_curator.mcp import (
 )
 from nhtsa_curator.memory import InMemorySessionStore
 
-
 # ---------------------------------------------------------------------------
 # Fakes (trimmed copies of test_agent_routing.py — not imported to avoid
 # coupling the tracing suite to that file's evolution).
@@ -49,7 +48,7 @@ class _FakeToolCall:
     arguments: str
 
     @property
-    def function(self) -> "_FakeToolCall":
+    def function(self) -> _FakeToolCall:
         return self
 
     @property
@@ -132,9 +131,14 @@ class _FakeGenieClient:
 @pytest.fixture
 def cfg() -> ProjectConfig:
     return ProjectConfig(
-        catalog="cat", schema="sch", volume="vol", llm_endpoint="llm",
-        embedding_endpoint="emb", warehouse_id="wh",
-        vector_search_endpoint="ep", genie_space_id="real",
+        catalog="cat",
+        schema="sch",
+        volume="vol",
+        llm_endpoint="llm",
+        embedding_endpoint="emb",
+        warehouse_id="wh",
+        vector_search_endpoint="ep",
+        genie_space_id="real",
     )
 
 
@@ -176,21 +180,21 @@ def _last_trace() -> Any:
     return trace
 
 
-def test_execute_tool_creates_retriever_span(ctx: ToolContext, tracing_enabled):
+def test_execute_tool_creates_retriever_span(ctx: ToolContext, tracing_enabled: None):
     execute_tool(VECTOR_SEARCH_TOOL_NAME, {"query": "fire"}, ctx)
     trace = _last_trace()
     names = [(s.name, s.span_type) for s in trace.data.spans]
     assert (f"tool.{VECTOR_SEARCH_TOOL_NAME}", "RETRIEVER") in names
 
 
-def test_execute_tool_tool_span_for_fetch(ctx: ToolContext, tracing_enabled):
+def test_execute_tool_tool_span_for_fetch(ctx: ToolContext, tracing_enabled: None):
     execute_tool("fetch_tsb", {"nhtsa_item_number": "TSB-1"}, ctx)
     trace = _last_trace()
     span = next(s for s in trace.data.spans if s.name.startswith("tool."))
     assert span.span_type == "TOOL"
 
 
-def test_run_turn_emits_nested_agent_llm_spans(ctx: ToolContext, tracing_enabled):
+def test_run_turn_emits_nested_agent_llm_spans(ctx: ToolContext, tracing_enabled: None):
     script = [_FakeMessage(content="hello")]  # no tool calls — simplest shape.
     agent = _build_agent(script, ctx)
     agent.run_turn("q1", user_id="user-a")
@@ -200,7 +204,7 @@ def test_run_turn_emits_nested_agent_llm_spans(ctx: ToolContext, tracing_enabled
     assert "LLM" in types
 
 
-def test_run_turn_nests_tool_span_under_agent(ctx: ToolContext, tracing_enabled):
+def test_run_turn_nests_tool_span_under_agent(ctx: ToolContext, tracing_enabled: None):
     script = [
         _FakeMessage(tool_calls=[_tool_call(GENIE_TOOL_NAME, {"question": "q"})]),
         _FakeMessage(content="done"),
@@ -212,7 +216,7 @@ def test_run_turn_nests_tool_span_under_agent(ctx: ToolContext, tracing_enabled)
     assert {"AGENT", "LLM", "RETRIEVER"} <= type_set
 
 
-def test_run_turn_tags_trace_with_session_id(ctx: ToolContext, tracing_enabled):
+def test_run_turn_tags_trace_with_session_id(ctx: ToolContext, tracing_enabled: None):
     agent = _build_agent([_FakeMessage(content="x")], ctx)
     result = agent.run_turn("q", user_id="user-x")
     trace = _last_trace()

@@ -53,17 +53,19 @@ def test_tesla_group_self() -> None:
 
 
 def test_component_group_strips_hierarchy() -> None:
-    assert taxonomy.component_group(
-        "ENGINE AND ENGINE COOLING:ENGINE:CYLINDER BLOCK"
-    ) == "Engine And Engine Cooling"
+    assert (
+        taxonomy.component_group("ENGINE AND ENGINE COOLING:ENGINE:CYLINDER BLOCK")
+        == "Engine And Engine Cooling"
+    )
     assert taxonomy.component_group("BATTERY") == "Battery"
     assert taxonomy.component_group(None) is None
     assert taxonomy.component_group("") is None
 
 
 def test_component_leaf_extracts_tail() -> None:
-    assert taxonomy.component_leaf(
-        "ENGINE AND ENGINE COOLING:ENGINE:CYLINDER BLOCK"
-    ) == "Cylinder Block"
+    assert (
+        taxonomy.component_leaf("ENGINE AND ENGINE COOLING:ENGINE:CYLINDER BLOCK")
+        == "Cylinder Block"
+    )
     assert taxonomy.component_leaf("BATTERY") == "Battery"
     assert taxonomy.component_leaf(None) is None
