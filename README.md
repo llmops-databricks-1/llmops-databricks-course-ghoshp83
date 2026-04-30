@@ -98,7 +98,6 @@ llmops-databricks-course-ghoshp83/
 │   ├── notebooks/                 <- Topic-aligned notebooks (1.x .. 6.x)
 │   ├── resources/                 <- Asset-bundle YAMLs + dashboard + scripts
 │   ├── tests/                     <- Pytest suite
-│   ├── docs/                      <- Architecture + design + runbook docs
 │   ├── databricks.yml             <- Asset bundle root
 │   ├── project_config.yml         <- Per-env config + system prompt
 │   └── pyproject.toml
@@ -202,6 +201,3 @@ cd nhtsa_defect_intel   && uv run pytest
   full NHTSA defect-intel project guide: data sources, medallion
   schema, agent + tool surface, 3-tier evaluation, deployment
   runbook, and operational dashboard.
-- [`nhtsa_defect_intel/docs/`](./nhtsa_defect_intel/docs/) —
-  architecture / data-model / agent-design / deployment design docs
-  for the NHTSA project.

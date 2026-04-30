@@ -30,7 +30,6 @@ identifiers.
 11. [Deployment](#deployment)
 12. [Workflow catalogue](#workflow-catalogue)
 13. [Testing](#testing)
-14. [Documentation](#documentation)
 
 ---
 
@@ -163,18 +162,6 @@ Building blocks:
 
 ```
 nhtsa_defect_intel/
-├── docs/                              <- All design + architecture docs
-│   ├── 00_project_overview.md
-│   ├── 01_architecture.md
-│   ├── 02_data_sources.md
-│   ├── 03_data_model.md
-│   ├── 04_agent_design.md
-│   ├── 05_evaluation_strategy.md
-│   ├── 06_deployment_plan.md
-│   ├── 07_build_roadmap.md
-│   ├── 08_deployment_runbook.md       <- End-to-end deploy guide
-│   └── phase{1..6}_implementation.md  <- Per-phase implementation notes
-│
 ├── notebooks/                         <- Topic-aligned notebooks (1.x .. 6.x)
 │   ├── 1.1 .. 1.6_*                   <- Bronze ingestion (recalls, complaints,
 │   │                                     investigations, TSBs, SGO, doc scrape)
@@ -568,9 +555,8 @@ databricks bundle run nhtsa_agent_eval --target dev
 databricks bundle run update_traces_aggregated --target dev
 ```
 
-For the full sequencing (prereqs → ingestion → silver → gold →
-VS + Genie + Lakebase → eval → register/deploy → dashboard), see
-[`docs/08_deployment_runbook.md`](./docs/08_deployment_runbook.md).
+The full sequencing is: prereqs → ingestion → silver → gold →
+VS + Genie + Lakebase → eval → register/deploy → dashboard.
 
 ---
 
@@ -626,28 +612,3 @@ Suites in `tests/`:
 The agent is built with injected collaborators (`LLMClient`,
 `ToolContext`, `SessionStore`) so the suite never imports the
 Databricks SDK at test-collection time.
-
----
-
-## Documentation
-
-In-depth design docs live under [`docs/`](./docs/):
-
-- [`00_project_overview.md`](./docs/00_project_overview.md) — goals,
-  user personas, scope.
-- [`01_architecture.md`](./docs/01_architecture.md) — system layout,
-  control + data flow.
-- [`02_data_sources.md`](./docs/02_data_sources.md) — endpoint
-  catalogue + cadence + caveats.
-- [`03_data_model.md`](./docs/03_data_model.md) — bronze / silver /
-  gold schemas, surrogate keys, taxonomy.
-- [`04_agent_design.md`](./docs/04_agent_design.md) — tool surface,
-  prompt strategy, multi-turn refinement.
-- [`05_evaluation_strategy.md`](./docs/05_evaluation_strategy.md) —
-  tier definitions, scorers, promotion gates.
-- [`06_deployment_plan.md`](./docs/06_deployment_plan.md) —
-  serving + dashboard topology.
-- [`07_build_roadmap.md`](./docs/07_build_roadmap.md) — phased plan.
-- [`08_deployment_runbook.md`](./docs/08_deployment_runbook.md) —
-  step-by-step deployment guide.
-- `phase{1..6}_implementation.md` — per-phase implementation notes.
