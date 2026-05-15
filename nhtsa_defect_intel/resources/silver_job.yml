@@ -1,0 +1,82 @@
+resources:
+  jobs:
+    silver_job:
+      name: nhtsa_silver_build
+      tags:
+        project_name: "nhtsa-curator"
+        layer: "silver"
+
+      # Runs after the Phase 1 ingestion jobs (6–9 UTC).
+      schedule:
+        quartz_cron_expression: "0 0 11 * * ?"
+        timezone_id: "UTC"
+        pause_status: ${var.schedule_pause_status}
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: silver_recalls
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/2.1_silver_recalls.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"
+
+        - task_key: silver_complaints
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/2.2_silver_complaints.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"
+
+        - task_key: silver_investigations
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/2.3_silver_investigations.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"
+
+        - task_key: silver_tsbs
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/2.4_silver_tsbs_parse.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"
+
+        - task_key: silver_sgo
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/2.5_silver_sgo.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"
+              key_column: "report_id"
+              make_column: "make"
+              sae_column: "sae_automation_level"
+              incident_date_column: "incident_date"
+
+        - task_key: silver_investigations_parse
+          environment_key: default
+          # Gate behind silver_investigations so the PDF parse step only
+          # runs once the investigation silver table is in place.
+          # bronze_investigation_documents is populated by a separate
+          # scraper (Phase 2 follow-up); until that scraper exists, this
+          # task will still print a "table not present" notice and skip
+          # ai_parse_document — the dependency just keeps the DAG tidy.
+          depends_on:
+            - task_key: silver_investigations
+          notebook_task:
+            notebook_path: ../notebooks/2.6_silver_investigations_parse.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"
+              max_docs_per_run: "100"

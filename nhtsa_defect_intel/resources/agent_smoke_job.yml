@@ -1,0 +1,36 @@
+resources:
+  jobs:
+    agent_smoke_job:
+      name: nhtsa_agent_smoke
+      tags:
+        project_name: "nhtsa-curator"
+        layer: "agent"
+
+      # Runs after the Phase 3 refresh_vector_index cron (16 UTC). Two
+      # hours' buffer lets the index finish re-syncing. Smoke is
+      # deliberately light — 5 canned questions — because the heavier
+      # eval harness lands in Phase 5.
+      schedule:
+        quartz_cron_expression: "0 0 18 * * ?"
+        timezone_id: "UTC"
+        pause_status: ${var.schedule_pause_status}
+
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies:
+              - ../dist/*.whl
+
+      tasks:
+        - task_key: agent_local_smoke
+          environment_key: default
+          notebook_task:
+            notebook_path: ../notebooks/4.1_agent_local.py
+            base_parameters:
+              env: ${bundle.target}
+              run_id: "{{job.run_id}}"
+              # Default to in-memory store in the scheduled run so we
+              # don't pollute Lakebase with smoke-test sessions. Flip to
+              # true manually when exercising the full Lakebase path.
+              use_lakebase: "false"

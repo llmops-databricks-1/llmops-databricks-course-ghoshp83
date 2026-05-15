@@ -1,0 +1,69 @@
+# OEM group → constituent makes.
+# Hand-curated from public corporate filings as of 2026-Q1.
+# When NHTSA reports a make-level recall, dim_oem_group rolls it up to
+# the parent so analysts can ask "show me all Stellantis recalls" in
+# Genie without listing every brand.
+
+oem_groups:
+  - oem_group: "Stellantis"
+    makes: [Chrysler, Dodge, Jeep, Ram, Fiat, "Alfa Romeo", Maserati]
+
+  - oem_group: "Volkswagen Group"
+    makes: [Volkswagen, Audi, Porsche, Bentley, Lamborghini, "Bugatti"]
+
+  - oem_group: "Hyundai Motor Group"
+    makes: [Hyundai, Kia, Genesis]
+
+  - oem_group: "Toyota Motor Corporation"
+    makes: [Toyota, Lexus]
+
+  - oem_group: "Honda Motor"
+    makes: [Honda, Acura]
+
+  - oem_group: "Nissan"
+    makes: [Nissan, Infiniti]
+
+  - oem_group: "General Motors"
+    makes: [Chevrolet, GMC, Cadillac, Buick]
+
+  - oem_group: "Ford Motor"
+    makes: [Ford, Lincoln]
+
+  - oem_group: "BMW Group"
+    makes: [BMW, Mini, "Rolls-Royce"]
+
+  - oem_group: "Mercedes-Benz Group"
+    makes: ["Mercedes-Benz", Smart]
+
+  - oem_group: "Tata Motors"
+    makes: ["Land Rover", "Range Rover", Jaguar]
+
+  - oem_group: "Geely"
+    makes: [Volvo, Polestar, Lotus]
+
+  - oem_group: "Mazda"
+    makes: [Mazda]
+
+  - oem_group: "Subaru"
+    makes: [Subaru]
+
+  - oem_group: "Tesla"
+    makes: [Tesla]
+
+  - oem_group: "Rivian"
+    makes: [Rivian]
+
+  - oem_group: "Lucid"
+    makes: [Lucid]
+
+# Common spelling variants that NHTSA submitters use → canonical form.
+# Applied before the make → oem_group lookup. Keys are uppercase for
+# case-insensitive match.
+make_aliases:
+  CHEVY: "Chevrolet"
+  VW: "Volkswagen"
+  MB: "Mercedes-Benz"
+  "MERCEDES BENZ": "Mercedes-Benz"
+  "ALFA-ROMEO": "Alfa Romeo"
+  "ROLLS ROYCE": "Rolls-Royce"
+  "RANGE-ROVER": "Range Rover"

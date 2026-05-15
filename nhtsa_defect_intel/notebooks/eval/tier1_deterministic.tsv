@@ -1,0 +1,40 @@
+# Tier 1 — Deterministic eval set (~25 questions)
+# Columns: question<TAB>reference_sql<TAB>expected_value
+# - expected_value for a scalar answer: the literal value as a string.
+# - expected_value for a list answer: "|"-joined values; scorer parses
+#   and computes Jaccard ≥ 0.8.
+# - reference_sql is the query that produced expected_value at the
+#   frozen delta version {env}.gold_*. Re-run it after a gold refresh to
+#   regenerate ground truth; do NOT leave stale expected_values.
+# - When expected_value is unresolved for this env, leave it as
+#   "TBD:<short-name>" and the loader marks the question as pending so
+#   it contributes to coverage but not to the pass rate.
+#
+# Keep this file ASCII + one question per line; the loader splits on
+# raw tabs and does not support CSV quoting for Tier 1.
+question	reference_sql	expected_value
+How many recall campaigns were issued for Tesla in 2023?	SELECT COUNT(DISTINCT campaign_number) FROM {schema}.gold_recalls_fact WHERE make_norm = 'Tesla' AND YEAR(report_received_date) = 2023	15
+How many recall campaigns were issued for Ford in 2024?	SELECT COUNT(DISTINCT campaign_number) FROM {schema}.gold_recalls_fact WHERE make_norm = 'Ford' AND YEAR(report_received_date) = 2024	54
+How many consumer complaints mention 'airbag' for Honda Civic model year 2022?	SELECT COUNT(*) FROM {schema}.gold_complaints_fact WHERE make_norm = 'Honda' AND model = 'Civic' AND model_year = 2022 AND LOWER(complaint_text) LIKE '%airbag%'	TBD:honda_civic_2022_airbag
+How many vehicles were potentially affected by Takata airbag recalls?	SELECT SUM(potentially_affected) FROM {schema}.gold_recalls_fact WHERE LOWER(component) LIKE '%air bag%' AND LOWER(summary) LIKE '%takata%'	TBD:takata_sum
+Top 3 OEM groups by complaint volume in 2024 (ordered).	SELECT oem_group FROM {schema}.gold_complaints_fact WHERE YEAR(date_received) = 2024 GROUP BY oem_group ORDER BY COUNT(*) DESC LIMIT 3	Ford Motor|Stellantis|General Motors
+List all OEM groups with open engineering analyses on EV batteries as of 2025-12-31.	SELECT DISTINCT oem_group FROM {schema}.gold_investig_fact WHERE investigation_type = 'EA' AND status = 'open' AND LOWER(component) LIKE '%battery%' AND open_date <= '2025-12-31'	TBD:ev_battery_ea_oems
+Which Tesla model had the most complaints in 2024?	SELECT model FROM {schema}.gold_complaints_fact WHERE make_norm = 'Tesla' AND YEAR(date_received) = 2024 GROUP BY model ORDER BY COUNT(*) DESC LIMIT 1	TBD:tesla_top_model_2024
+How many TSBs were issued by General Motors in 2023?	SELECT COUNT(*) FROM {schema}.gold_tsbs_fact WHERE oem_group = 'General Motors' AND YEAR(tsb_date) = 2023	TBD:gm_tsbs_2023
+How many SGO AV-related crashes were reported in California in 2024?	SELECT COUNT(*) FROM {schema}.gold_sgo_fact WHERE state = 'CA' AND YEAR(incident_date) = 2024	TBD:sgo_ca_2024
+How many Ford F-150 recalls mention 'brake' in the summary since 2020?	SELECT COUNT(DISTINCT campaign_number) FROM {schema}.gold_recalls_fact WHERE make_norm = 'Ford' AND model = 'F-150' AND report_received_date >= '2020-01-01' AND LOWER(summary) LIKE '%brake%'	TBD:f150_brake_since_2020
+Top 5 component groups by recall volume in 2024 (ordered).	SELECT component_group FROM {schema}.gold_recalls_fact WHERE YEAR(report_received_date) = 2024 GROUP BY component_group ORDER BY COUNT(*) DESC LIMIT 5	Fuel System, Gasoline|Electrical System|Equipment|Structure|Air Bags
+What year had the highest volume of Toyota recalls in the last decade?	SELECT YEAR(report_received_date) FROM {schema}.gold_recalls_fact WHERE make_norm = 'Toyota' AND report_received_date >= '2016-01-01' GROUP BY YEAR(report_received_date) ORDER BY COUNT(*) DESC LIMIT 1	2025
+How many investigations were opened on Hyundai/Kia engines since 2022?	SELECT COUNT(*) FROM {schema}.gold_investig_fact WHERE oem_group = 'Hyundai Motor Group' AND LOWER(component) LIKE '%engine%' AND open_date >= '2022-01-01'	TBD:hmg_engine_invs_since_2022
+Total vehicles affected by Stellantis recalls in 2024.	SELECT SUM(potentially_affected) FROM {schema}.gold_recalls_fact WHERE oem_group = 'Stellantis' AND YEAR(report_received_date) = 2024	61235632
+How many Rivian recalls have been issued to date?	SELECT COUNT(DISTINCT campaign_number) FROM {schema}.gold_recalls_fact WHERE make_norm = 'Rivian'	22
+How many complaints reference 'phantom braking' for Tesla Model 3 in 2023-2024?	SELECT COUNT(*) FROM {schema}.gold_complaints_fact WHERE make_norm = 'Tesla' AND model = 'Model 3' AND YEAR(date_received) BETWEEN 2023 AND 2024 AND LOWER(complaint_text) LIKE '%phantom braking%'	TBD:m3_phantom_braking
+List the top 3 makes by number of open preliminary evaluations as of 2026-01-01.	SELECT make_norm FROM {schema}.gold_investig_fact WHERE investigation_type = 'PE' AND status = 'open' AND open_date <= '2026-01-01' GROUP BY make_norm ORDER BY COUNT(*) DESC LIMIT 3	TBD:pe_top3_makes
+How many TSBs reference 'infotainment' across all OEMs in 2024?	SELECT COUNT(*) FROM {schema}.gold_tsbs_fact WHERE YEAR(tsb_date) = 2024 AND LOWER(summary) LIKE '%infotainment%'	TBD:infotainment_tsbs_2024
+How many recall campaigns had fewer than 100 vehicles affected in 2024?	SELECT COUNT(*) FROM {schema}.gold_recalls_fact WHERE YEAR(report_received_date) = 2024 AND potentially_affected < 100	TBD:small_recalls_2024
+Which investigation types appear most frequently over the last 5 years, ordered?	SELECT investigation_type FROM {schema}.gold_investig_fact WHERE open_date >= DATE_SUB(CURRENT_DATE, 1825) GROUP BY investigation_type ORDER BY COUNT(*) DESC	TBD:inv_types_5y
+How many recalls relate to EV battery thermal events since 2022?	SELECT COUNT(DISTINCT campaign_number) FROM {schema}.gold_recalls_fact WHERE report_received_date >= '2022-01-01' AND LOWER(summary) LIKE '%battery%' AND (LOWER(summary) LIKE '%thermal%' OR LOWER(summary) LIKE '%fire%')	TBD:ev_thermal_recalls
+How many complaints cite 'unintended acceleration' in 2023?	SELECT COUNT(*) FROM {schema}.gold_complaints_fact WHERE YEAR(date_received) = 2023 AND LOWER(complaint_text) LIKE '%unintended acceleration%'	TBD:ua_2023
+Which 3 model years have the most open recalls still active today?	SELECT model_year FROM {schema}.gold_recalls_fact WHERE status = 'active' GROUP BY model_year ORDER BY COUNT(*) DESC LIMIT 3	TBD:top3_model_years_open
+How many investigations closed in 2024 resulted in a recall?	SELECT COUNT(*) FROM {schema}.gold_investig_fact WHERE YEAR(close_date) = 2024 AND outcome = 'recall'	TBD:inv_closed_resulted_recall_2024
+What fraction of 2024 complaints involve ADAS features? (decimal)	SELECT ROUND(SUM(CASE WHEN LOWER(complaint_text) LIKE '%adas%' OR LOWER(complaint_text) LIKE '%autopilot%' OR LOWER(complaint_text) LIKE '%lane keep%' THEN 1 ELSE 0 END) / COUNT(*), 3) FROM {schema}.gold_complaints_fact WHERE YEAR(date_received) = 2024	TBD:adas_fraction_2024

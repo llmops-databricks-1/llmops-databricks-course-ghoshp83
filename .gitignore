@@ -95,3 +95,13 @@ dmypy.json
 # VS code configuration
 .vscode
 .history
+
+**/uv.lock
+**/tests/__pycache__
+**/docs/
+**/mlruns/
+**/mlflow.db
+**/src/*.egg-info/
+
+# Claude Code local config
+.claude/settings.json

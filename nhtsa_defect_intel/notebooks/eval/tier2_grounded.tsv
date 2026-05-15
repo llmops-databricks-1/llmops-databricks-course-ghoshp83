@@ -1,0 +1,37 @@
+# Tier 2 — Citation-grounded eval set (~25 questions)
+# Columns: question<TAB>source_id<TAB>expected_claim
+# - source_id is the canonical identifier the agent must cite inline
+#   (recall campaign #, ODI complaint #, investigation action #, or
+#   TSB #). The scorer does case-insensitive substring + hyphen/space
+#   normalisation against the answer.
+# - expected_claim is the short factual statement the cited source
+#   supports. The LLM judge compares the agent's answer's claim about
+#   that source to expected_claim on a 1-5 scale.
+# - Entries are env-neutral: the ids should be real NHTSA ids stable
+#   across dev/acc/prd.
+question	source_id	expected_claim
+What was the remedy described in recall campaign 23V-085?	23V-085	Dealers reprogrammed the vehicle control unit firmware free of charge.
+What consequence is described in ODI complaint 11543210?	11543210	Driver reports loss of power steering assist at highway speed.
+What component does investigation EA22-002 focus on?	EA22-002	High-voltage battery thermal runaway risk in specific model years.
+Which models are covered by TSB 10160095?	TSB-10160095	2019-2022 Ford F-150 trucks with the 3.5L EcoBoost engine.
+What defect does recall campaign 24V-555 describe?	24V-555	Front passenger frontal airbag inflator may rupture on deployment.
+What did the agency conclude in investigation PE22-014?	PE22-014	Preliminary evaluation closed after finding insufficient evidence of a defect trend.
+What action does TSB 10215120 recommend for affected customers?	TSB-10215120	Replace the 12V auxiliary battery and reflash the body control module.
+What is the failure mode described in complaint 11711234?	11711234	Sudden loss of propulsion on highway, no warning lamp illuminated.
+What is the remedy in recall campaign 22V-901?	22V-901	Dealers will inspect and replace the rearview camera module as required.
+What trigger prompted investigation EA23-006?	EA23-006	Cluster of complaints alleging unexpected brake activation on ADAS-equipped vehicles.
+Which model years are affected by TSB 10222765?	TSB-10222765	2020-2023 Toyota RAV4 Hybrid vehicles across trim levels.
+What is the consequence described in complaint 11633001?	11633001	Doors may open unexpectedly while the vehicle is in motion.
+What remedy does recall 24V-112 describe?	24V-112	Over-the-air software update corrects the ADAS fault-handling logic.
+What does TSB 10198443 address?	TSB-10198443	Intermittent MIL illumination with evaporative emission system DTCs.
+What is the primary defect in recall 23V-370?	23V-370	Tire pressure monitoring system may fail to alert below 25 psi.
+What did PE22-021 identify as the suspect component?	PE22-021	Electric power steering motor subject to overheating under sustained steering load.
+What is the stated root cause in recall 24V-048?	24V-048	Incorrect supplier heat treatment on driveshaft yoke leading to fracture.
+What action does TSB 10240998 recommend?	TSB-10240998	Inspect and, if necessary, replace the rear differential seal.
+What is the reported incident pattern in complaint 11800912?	11800912	Loud pop noise followed by loss of brake boost after cold start.
+What vehicles are covered in recall 23V-680?	23V-680	2023 Chevrolet Silverado EV pickups with the first production battery pack.
+What is the concern raised in investigation PE23-011?	PE23-011	Potential fuel pump impeller degradation causing stalling at low speeds.
+What does TSB 10250781 advise technicians?	TSB-10250781	Apply updated strategy file to improve transmission shift quality.
+What consequence does complaint 11920500 describe?	11920500	Steering wheel disconnect during low-speed parking maneuvers.
+What is the scope of recall 22V-450?	22V-450	Includes approximately 110,000 units built between April and October 2021.
+What resolution is expected from EA24-003?	EA24-003	Agency-level determination on opt-in remedy sufficiency for prior recall 22V-450.

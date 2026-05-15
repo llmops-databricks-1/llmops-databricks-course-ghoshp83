@@ -1,0 +1,66 @@
+# Databricks Asset Bundle for the NHTSA Defect Intelligence Agent.
+# Mirrors the structure used by the reference arxiv-curator project so the
+# same CI/CD patterns apply.
+# See https://docs.databricks.com/dev-tools/bundles/index.html
+
+bundle:
+  name: nhtsa-defect-intel
+
+artifacts:
+  default:
+    type: whl
+    build: uv build
+    path: .
+
+variables:
+  git_sha:
+    description: git_sha
+    default: abcd
+  branch:
+    description: branch
+    default: main
+  schedule_pause_status:
+    description: schedule pause status
+    default: PAUSED
+  warehouse_id:
+    description: SQL warehouse ID used by the dashboard + Genie tool
+    default: 96e26e80fcd91931
+
+include:
+  - resources/*.yml
+  - resources/*/*.yml
+
+sync:
+  include:
+    - eval_inputs.txt
+    - project_config.yml
+    - nhtsa_agent_pg.py
+    # TSV eval sets are not picked up by the default .py/.ipynb/.yml
+    # sync filter, so edits to ground-truth rows silently fail to
+    # land in the workspace. Opt them in explicitly.
+    - notebooks/eval/*.tsv
+
+targets:
+  dev:
+    mode: development
+    workspace:
+      host: https://dbc-b1b2f91a-d102.cloud.databricks.com/
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.target}/${bundle.name}
+    run_as:
+      user_name: ${workspace.current_user.userName}
+
+  acc:
+    mode: production
+    workspace:
+      host: https://dbc-b1b2f91a-d102.cloud.databricks.com
+      root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
+    variables:
+      schedule_pause_status: PAUSED
+
+  prd:
+    workspace:
+      host: https://dbc-b1b2f91a-d102.cloud.databricks.com
+      root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
+    variables:
+      schedule_pause_status: UNPAUSED
+      warehouse_id: 7077f4cb0e616c62
