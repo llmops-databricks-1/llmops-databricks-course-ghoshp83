@@ -102,3 +102,6 @@ dmypy.json
 **/mlruns/
 **/mlflow.db
 **/src/*.egg-info/
+
+# Claude Code local config
+.claude/settings.json

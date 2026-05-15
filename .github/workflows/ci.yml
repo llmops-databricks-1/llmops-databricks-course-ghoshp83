@@ -1,10 +1,9 @@
 name: CI
 
 on:
-  push:
+  pull_request:
     branches:
       - main
-      - demo_submission
   workflow_dispatch:
       inputs:
         project:
@@ -18,14 +17,64 @@ on:
 
 
 jobs:
-  pytest_and_checks:
+  # Detect which project folder(s) changed in this PR so we only run
+  # the relevant project's checks. On workflow_dispatch the filter
+  # outputs are ignored and the chosen project is run explicitly.
+  changes:
     runs-on: ubuntu-latest
-    env:
-      # CHANGE THIS LINE ONLY to switch projects for automatic pushes
-      ACTIVE_PROJECT: arxiv_curator
+    outputs:
+      arxiv_curator: ${{ steps.filter.outputs.arxiv_curator }}
+      nhtsa_defect_intel: ${{ steps.filter.outputs.nhtsa_defect_intel }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 #v3.0.3
+        id: filter
+        with:
+          filters: |
+            arxiv_curator:
+              - 'arxiv_curator/**'
+              - '.github/workflows/ci.yml'
+            nhtsa_defect_intel:
+              - 'nhtsa_defect_intel/**'
+              - '.github/workflows/ci.yml'
+
+  arxiv_curator:
+    needs: changes
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.project == 'arxiv_curator') || (github.event_name == 'pull_request' && needs.changes.outputs.arxiv_curator == 'true') }}
+    runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ${{ github.event.inputs.project || env.ACTIVE_PROJECT }}
+        working-directory: arxiv_curator
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182 #v5.4.1
+
+      - name: Install the dependencies
+        run: |
+          uv sync --extra ci
+
+      - name: Run pre-commit checks
+        run: |
+          uv run pre-commit run --all-files
+
+      - name: Run pytest
+        run: |
+          uv run pytest
+
+      - name: Build wheel
+        run: |
+          uv build
+
+  nhtsa_defect_intel:
+    needs: changes
+    if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.project == 'nhtsa_defect_intel') || (github.event_name == 'pull_request' && needs.changes.outputs.nhtsa_defect_intel == 'true') }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nhtsa_defect_intel
     steps:
       - uses: actions/checkout@v4
 
